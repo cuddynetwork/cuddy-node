@@ -11,12 +11,12 @@ Protocol data type is JSON. Data transfer is done by HTTP or HTTPS connection
       "method": "CLONE",
       "params": {
         "address": "89.231.22.170",
-        "post": "7733",
+        "port": 7733,
         "hostname": "node1.cuddy.lakewik.pl",
         "nodeID": "d5f7ae35768db5bd4ab02056cc408525d94780bd",
         "fileID": "9hsfd667sf78sfn8sdjfj87s",
-        "fileSize": "43223432", # in Bps
-        "fileHash": "35643656", # in Bps
+        "fileSize": 43223432, # in Bps
+        "fileHash": 35643656, # in Bps
       
       },
       "id": "7b6a2ab35da6826995abf3310a4875097df88cdb"
@@ -35,7 +35,7 @@ Protocol data type is JSON. Data transfer is done by HTTP or HTTPS connection
   
   "node": {
     "address": "89.231.22.170",
-    "post": "7733",
+    "port": 7733,
     "hostname": "node1.cuddy.lakewik.pl",
     "nodeID": "d5f7ae35768db5bd4ab02056cc408525d94780bd",
 	},
@@ -60,14 +60,14 @@ GET request structure: ```http://[https://]node_address:node_port/tx/contractId`
   "params": {
   "node": {
     "address": "89.231.22.170",
-    "post": "7733",
+    "port": 7733,
     "hostname": "node1.cuddy.lakewik.pl",
     "nodeID": "d5f7ae35768db5bd4ab02056cc408525d94780bd",
 	},
 	
     "contractID": "d5f7ae35768db5bd4ab02056cc408525d94780bd",
-    "fileSize": "2", # 3 transfer priority levels,
-    "fileHash": "2", # SHA-516 cryptographic file hash,
+    "fileSize": 2, # 3 transfer priority levels,
+    "fileHash": 2, # SHA-516 cryptographic file hash,
     "fileType": "static", # static or script
 	
   },
@@ -95,8 +95,8 @@ If upload success the node requesting to save file location in blockchain by bro
   "method": "NEGOTIATE",
   "params": {
     "transferFee": "d5f7ae35768db5bd4ab02056cc408525d94780bd",
-    "excutionFee": "2", # 3 transfer priority levels,
-    "storageFee": "2", # fee per one hour of storage
+    "excutionFee": 2, # 3 transfer priority levels,
+    "storageFee": 2, # fee per one hour of storage
     "fileType": "static", # static or script
 	
   },
@@ -116,7 +116,7 @@ If upload success the node requesting to save file location in blockchain by bro
       "method": "PING",
       "params": {
         "address": "89.231.22.170",
-        "post": "7733",
+        "port": 7733,
         "hostname": "node1.cuddy.lakewik.pl",
       
       },
@@ -131,7 +131,7 @@ If upload success the node requesting to save file location in blockchain by bro
       "method": "PONG",
       "params": {
         "address": "89.231.22.170",
-        "post": "7733",
+        "port": 7733,
         "hostname": "node1.cuddy.lakewik.pl",
       
       },
