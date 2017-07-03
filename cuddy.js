@@ -8,11 +8,12 @@
 // For ladger of contracts
 var Contract = {
     tx : "default",
+    type: "static", // static or script
     submited: 0, //timestamp of submmision
     expireDate: 0, //timestamp of expiration
     fee: {
         storage: 0,
-        proccessing: 0,
+        execution: 0,
         transfer: 0
     },
     requestAll: 0, // how much requests has been made
@@ -29,6 +30,7 @@ var Contract = {
     dataChecksum: "default", // calculated from data
     userChecksum: "default" // calculated from dataChecksum and private key, can by verify by public key and dataCheckSum
 };
+
 // For ladger of reputation
 var Node = {
     nodeId: "default", // uniq hash, don't know if needed
