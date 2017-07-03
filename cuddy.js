@@ -16,7 +16,12 @@ var Contract = {
     },
     nodes: {
         //must be a vector of nodes
-    }
+    },
+    complexity: 0, //calculated by node which recived contract,
+    size: 0, //can be check by node to verify if not forgery
+    reqLastMinute: 0, //amount of resource request (will be used to ajust amount of nodes to store file)
+    dataChecksum: "default", // calculated from data
+    userChecksum: "default" // calculated from dataChecksum and private key, can by verify by public key and dataCheckSum
     
 } 
 
