@@ -111,7 +111,7 @@ If upload success the node requesting to save file location in blockchain by bro
 **PING** - check if node is online
 	Parametrs and message structure:
   
-	```
+```
       {
       "method": "PING",
       "params": {
@@ -122,7 +122,7 @@ If upload success the node requesting to save file location in blockchain by bro
       },
       "id": "7b6a2ab35da6826995abf3310a4875097df88cdb"
     }
-      ```
+       ```
 	
 	Response structure:
 	
@@ -137,5 +137,5 @@ If upload success the node requesting to save file location in blockchain by bro
       },
       "id": "7b6a2ab35da6826995abf3310a4875097df88cdb"
     }
-      ```
+    ```
 	
