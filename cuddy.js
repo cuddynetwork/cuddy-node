@@ -63,7 +63,8 @@ var Node = {
 // max length of vector about 5 nodes
 var Connection = {
     NodeId: "default",
-    ip: "255.255.255" // more can get from NodeLadger, no need for save twice
+    ip: "255.255.255",
+    rating: 0// more can get from NodeLadger, no need for save twice
 }
 
 var CloneRequest = {
@@ -134,3 +135,12 @@ wsServer.on('request', function(request) {
     // close user connection
   });
 });
+
+
+// Connections Init
+
+$.getScript('cuddy_events/Connections.js', function(){
+    MakeFirstConnections();
+});
+
+
