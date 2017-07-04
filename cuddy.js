@@ -7,6 +7,10 @@ var WebSocketServer = require('websocket').server;
 var http = require('http');
 var Hashes = require('jshashes')
 var crypto = require('crypto');
+var KBucket = require('k-bucket');
+var colors = require('colors/safe');
+var dateTime = require('node-datetime');
+
 
 /* Constants */
 
@@ -27,13 +31,20 @@ function generateNodeID() {
 
 /* Initialization */
 
+var dt = dateTime.create();
+dt.format('m/d/Y H:M:S');
+
+var kBucket = new KBucket({
+    localNodeId: new Buffer("ffcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b9121876e9576309183") // default: random data
+})
+
 var PongQueue = [];
 
 firstrun = true; //TMP
 
 if (firstrun) {
 
-  console.log("Performing initial node initialization....");
+  console.log(colors.green("Performing initial node initialization...."));
 
   generateNodeID(function(id) {
       console.log(id);
@@ -42,12 +53,14 @@ if (firstrun) {
 
 }
 
-console.log('Cuddy node started!');
+localNodeID = "ffcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b9121876e9576309183";
+localNodeIP = "89.231.22.170";
+localNodePort = "6689";
+
+console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 /* Broadcast node to the Cuddy network */
 
-
-var NodePool = []
 
 /* Ledgers */
 
@@ -152,63 +165,84 @@ wsServer.on('request', function(request) {
         //console.log(json.name);
 
       } catch (e) {
-        console.log('Received invalid JSON message from remote node');
+        console.log(new Date(dt.now()) + " " + colors.red('Received invalid JSON message from remote node'));
      return;
       }
-        //console.log('Received ' + message.utf8Data);
 
-          //console.log(json.node.address);
 
         if (json.method == "COLLECT") {
             /// handle Collect request
-            console.log('Received COLLECT request from remote client');
+            console.log(new Date(dt.now()) + " " + 'Received COLLECT request from remote client');
 
         } else if (json.method == "NEGOTIATE") {
             /// handle Contract Negotiation request
-            console.log('Received NEGOTIATE request from remote client');
+            console.log(new Date(dt.now()) + " " + 'Received NEGOTIATE request from remote client');
 
         } else if (json.method == "NODE_ANNOUCE") {
             /// handle other node annoucement request
-            console.log('Received NODE_ANNOUCE message from remote client');
+            console.log(new Date(dt.now()) + " " + 'Received NODE_ANNOUCE message from remote client');
 
             i = 0;
-            for(var attribute in json.node){
+            for(var attribute in json.nodes){
 
-               new_node = Node;
-               new_node.ip = json.node[i].address;
-               new_node.port = json.node[i].port;
-               new_node.nodeId = json.node[i].nodeID;
-               i++;
+              if (kBucket.get(new Buffer(json.nodes[i].nodeID)) == null) {
+              // add contact to bucket
+              console.log(new Date(dt.now()) + " " + colors.yellow('Contact ' + json.nodes[i].nodeID + ' not in bucket, adding'));
+              nodeid = json.nodes[i].nodeID;
+              var contact = {
+                  id: new Buffer(json.nodes[i].nodeID),
+                  host: json.nodes[i].address,
+                  port: json.nodes[i].port,
+                  vectorClock: 0
+              };
 
-               //console.log(new_node);
+              kBucket.add(contact)
 
-              //  console.log(json.node[0].address);
-
-               NodePool.push(new_node);
+            } else {
+                console.log(new Date(dt.now()) + " " + 'Contact ' + json.nodes[i].nodeID + ' already exist in bucket');
             }
 
-            NodePool.push(Node);
-
-            NodePool.push("B");
-            NodePool.push("C");
+            i++;
+          }
 
 
-            console.log(NodePool);
+         console.log(kBucket.get(new Buffer('hukh676stdf7s8afos7mfoasmuf9a8sjd98sa')));
+         //console.log(kBucket.toArray());
 
 
-        } else if (json.method == "GET_KNOWN_NODES") {
-            /// handle other node annoucement request
-            console.log('Received GET_KNOWN_NODES request from remote client');
+       } else if (json.method == "FIND_NODE") {
+            /// send to other node nodes which you know
+            console.log('new Date(dt.now()) + " " + Received FIND_NODE request from remote client');
 
-            console.log('Sending NODE_ANNOUCE to remote node');
+            console.log('new Date(dt.now()) + " " + Sending NODE_ANNOUCE to remote node');
+
+            var bucketNodesArray = kBucket.toArray()
+
+            var NodeAnnouceResponse = {
+              method: "NODE_ANNOUCE",
+              nodes: bucketNodesArray
+            }
+
+            console.log(NodeAnnouceResponse)
 
         }  else if (json.name == "PING") {
             /// handle Ping with Pong responde send
+            console.log('new Date(dt.now()) + " " + Received PING message from remote client, so sending PONG :D');
 
+            var PongResponse = {
+              method: "PONG",
+              node: {
+                  nodeID: localNodeID,
+                  address: localNodeIP,
+                  port: localNodePort
+                }
+            }
 
+              connection.sendUTF(JSON.stringify(PongResponse));
         }
          else if (json.name == "PONG") {
             /// handle Pong with to que get (PongQueue)
+            connection.sendUTF('{  }');
 
           }
 
@@ -223,6 +257,6 @@ wsServer.on('request', function(request) {
 
 // Connections Init
 
-$.getScript('cuddy_events/Connections.js', function(){
-    MakeFirstConnections();
-});
+//$.getScript('cuddy_events/Connections.js', function(){
+//    MakeFirstConnections();//
+//});
