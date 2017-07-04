@@ -35,7 +35,7 @@ var Contract = {
 var Node = {
     nodeId: "default", // uniq hash, don't know if needed
     ip: "255.255.255",
-    port: 7733, // port to comunicate
+    port: 6689, // port to comunicate
     startTime: 0, // Timestamp of node first notice in the network 
     lastActive: 0, //Last activity of node in the network
     checkPositive: 0, //Possitive check by another node
