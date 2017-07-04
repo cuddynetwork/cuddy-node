@@ -5,21 +5,53 @@
 
 var WebSocketServer = require('websocket').server;
 var http = require('http');
+var Hashes = require('jshashes')
+var crypto = require('crypto');
 
 /* Constants */
 
 const DEFAULT_PORT_PUBLIC = 80;
 const DEFAULT_PORT_COMUNICATION = 6689;
 
+function searchMoreNodes(nodes_count) {
+    // Search and return Cuddy nodes
+}
+
+function generateNodeID() {
+   // Generate unicate NodeID
+
+   var NodeID = crypto.randomBytes(40).toString('hex');
+     console.log(NodeID);
+   return NodeID;
+}
+
 /* Initialization */
 
 var PongQueue = [];
 
+firstrun = true; //TMP
+
+if (firstrun) {
+
+  console.log("Performing initial node initialization....");
+
+  generateNodeID(function(id) {
+      console.log(id);
+  });
+
+
+}
+
 console.log('Cuddy node started!');
 
-/* Ladgers */
+/* Broadcast node to the Cuddy network */
 
-// For ladger of contracts
+
+var NodePool = []
+
+/* Ledgers */
+
+// For ledger of contracts
 var Contract = {
     tx : "default",
     type: "static", // static or script
@@ -45,9 +77,9 @@ var Contract = {
     userChecksum: "default" // calculated from dataChecksum and private key, can by verify by public key and dataCheckSum
 };
 
-// For ladger of reputation
+// For ledger of reputation
 var Node = {
-    nodeId: "default", // uniq hash, don't know if needed
+    nodeId: "default", // unique hash
     ip: "255.255.255",
     port: 6689, // port to comunicate
     startTime: 0, // Timestamp of node first notice in the network
@@ -65,8 +97,7 @@ var Node = {
 // max length of vector about 5 nodes
 var Connection = {
     NodeId: "default",
-    ip: "255.255.255",
-    rating: 0// more can get from NodeLadger, no need for save twice
+    ip: "255.255.255" // more can get from NodeLadger, no need for save twice
 }
 
 var CloneRequest = {
@@ -74,6 +105,8 @@ var CloneRequest = {
 
 }
 
+
+//curent_node.ip = "345";
 
 
 
@@ -96,15 +129,16 @@ wsServer = new WebSocketServer({
 
 // WebSocket server
 
-
-
 wsServer.on('request', function(request) {
-  console.log('Client connected');
+
   var connection = request.accept('cuddy-protocol', request.origin);
+
+  console.log('Remote node with address ' + connection.remoteAddress + ' connected!');
 
   connection.on('connect', function(connection) {
     // close user connection
-    console.log('Remote node connected');
+    console.log();
+
   });
 
   // This is the most important callback for us, we'll handle
@@ -116,28 +150,67 @@ wsServer.on('request', function(request) {
       try {
         var json = JSON.parse(message.utf8Data);
         //console.log(json.name);
+
       } catch (e) {
         console.log('Received invalid JSON message from remote node');
      return;
       }
         //console.log('Received ' + message.utf8Data);
 
-        if (json.name == "COLLECT") {
+          //console.log(json.node.address);
+
+        if (json.method == "COLLECT") {
             /// handle Collect request
+            console.log('Received COLLECT request from remote client');
 
-        } else if (json.name == "NEGOTIATE") {
+        } else if (json.method == "NEGOTIATE") {
             /// handle Contract Negotiation request
+            console.log('Received NEGOTIATE request from remote client');
 
-        }
-         else if (json.name == "PING") {
+        } else if (json.method == "NODE_ANNOUCE") {
+            /// handle other node annoucement request
+            console.log('Received NODE_ANNOUCE message from remote client');
+
+            i = 0;
+            for(var attribute in json.node){
+
+               new_node = Node;
+               new_node.ip = json.node[i].address;
+               new_node.port = json.node[i].port;
+               new_node.nodeId = json.node[i].nodeID;
+               i++;
+
+               //console.log(new_node);
+
+              //  console.log(json.node[0].address);
+
+               NodePool.push(new_node);
+            }
+
+            NodePool.push(Node);
+
+            NodePool.push("B");
+            NodePool.push("C");
+
+
+            console.log(NodePool);
+
+
+        } else if (json.method == "GET_KNOWN_NODES") {
+            /// handle other node annoucement request
+            console.log('Received GET_KNOWN_NODES request from remote client');
+
+            console.log('Sending NODE_ANNOUCE to remote node');
+
+        }  else if (json.name == "PING") {
             /// handle Ping with Pong responde send
-             
+
 
         }
          else if (json.name == "PONG") {
             /// handle Pong with to que get (PongQueue)
 
-        }
+          }
 
     }
   });
@@ -153,5 +226,3 @@ wsServer.on('request', function(request) {
 $.getScript('cuddy_events/Connections.js', function(){
     MakeFirstConnections();
 });
-
-
