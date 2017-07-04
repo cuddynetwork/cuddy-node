@@ -59,4 +59,4 @@ var Connection = {
 /* Events listening */
 
 const DEFAULT_PORT_PUBLIC = 80;
-const DEFAULT_PORT_COMUNICATION = 7733;
+const DEFAULT_PORT_COMUNICATION = 6689;
