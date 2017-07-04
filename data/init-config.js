@@ -16,7 +16,7 @@ module.exports = {
   /* Server port
   *  Port which uses for connecting other members to your device. Default: 7438
   */
-  myServerPort: 7438,
+  myServerPort: 6687,
   
   /* Miner mode
   *  If set to 'true' then device will create new coins (recommended)
@@ -39,7 +39,7 @@ module.exports = {
   /* Wallet port
   *  Port to load wallet in browser: localhost:7439
   */
-  walletPort: 7439,
+  walletPort: 6688,
   
   /* Wallet host
   *  Host to load wallet in browser. Default: 'localhost'
