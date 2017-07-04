@@ -40,6 +40,8 @@ var kBucket = new KBucket({
 
 var PongQueue = [];
 
+var CollectTokensBucket = [];
+
 firstrun = true; //TMP
 
 if (firstrun) {
@@ -223,7 +225,7 @@ wsServer.on('request', function(request) {
               nodes: bucketNodesArray
             }
 
-            console.log(NodeAnnouceResponse)
+            connection.sendUTF(JSON.stringify(NodeAnnouceResponse));
 
         }  else if (json.name == "PING") {
             /// handle Ping with Pong responde send
