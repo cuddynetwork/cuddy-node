@@ -13,6 +13,8 @@ const DEFAULT_PORT_COMUNICATION = 6689;
 
 /* Initialization */
 
+var PongQueue = [];
+
 console.log('Cuddy node started!');
 
 /* Ladgers */
@@ -125,6 +127,15 @@ wsServer.on('request', function(request) {
 
         } else if (json.name == "NEGOTIATE") {
             /// handle Contract Negotiation request
+
+        }
+         else if (json.name == "PING") {
+            /// handle Ping with Pong responde send
+             
+
+        }
+         else if (json.name == "PONG") {
+            /// handle Pong with to que get (PongQueue)
 
         }
 
