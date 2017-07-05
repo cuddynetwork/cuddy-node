@@ -87,19 +87,36 @@ client.on('connect', function(connection) {
     function annouceNode() {
         if (connection.connected) {
             var number = Math.round(Math.random() * 0xFFFFFF);
-            //connection.sendUTF(number.toString());
-            connection.sendUTF('{ "method": "NODE_ANNOUCE", "age": 42,   "nodes": [{  "address": "lakewik.pl",    "port": 6689,    "hostname": "node1.cuddy.lakewik.pl",    "nodeID": "iudsnyfsyfsdfndsi"}] }');
+
+            var NodeAnnouceRequest = {
+              method: "NODE_ANNOUCE",
+              nodes: {
+                address: localNodeIP,
+                port: localNodePort,
+                nodeID: localNodeID
+              }
+            }
+
+            connection.sendUTF(JSON.stringify(NodeAnnouceRequest));
+            setTimeout(annouceNode, 5000);
+        }
+    }
+
+    function getOtherNodes() {
+        if (connection.connected) {
 
           var FindNodeRequest = {
             method: "FIND_NODE"
           }
-
-            //connection.sendUTF(JSON.stringify(FindNodeRequest));
-            setTimeout(annouceNode, 5000);
+            connection.sendUTF(JSON.stringify(FindNodeRequest));
+            setTimeout(getOtherNodes, 5000);
         }
     }
-  //  sendNumber();
-  annouceNode();
+
+    annouceNode();
+    getOtherNodes();
+
+
 });
 
 
