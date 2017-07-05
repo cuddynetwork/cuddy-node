@@ -274,15 +274,17 @@ wsServer.on('request', function(request) {
             i = 0;
             for(var attribute in json.nodes){
 
-              if (kBucket.get(new Buffer(json.nodes[i].nodeID)) == null) {
-              // add contact to bucket
-              console.log(new Date(dt.now()) + " " + colors.yellow('Contact ' + json.nodes[i] + ' not in bucket, adding'));
               nodeid = json.nodes[i].nodeID;
               var contact = {
                   id: new Buffer(json.nodes[i].nodeID),
                   host: json.nodes[i].address,
                   port: json.nodes[i].port
               };
+
+              if (kBucket.get(new Buffer(json.nodes[i].nodeID)) == null) {
+              // add contact to bucket
+                console.log(new Date(dt.now()) + " " + colors.yellow('Contact ' +  JSON.stringify(json.nodes[i]) + ' not in bucket, adding'));
+
 
               kBucket.add(contact)
 
