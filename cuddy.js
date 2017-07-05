@@ -86,15 +86,20 @@ client.on('connect', function(connection) {
 
     function annouceNode() {
         if (connection.connected) {
-            var number = Math.round(Math.random() * 0xFFFFFF);
 
-            var NodeAnnouceRequest = {
-              method: "NODE_ANNOUCE",
-              nodes: {
+            var nodesArray = [];
+
+            var node =  {
                 address: localNodeIP,
                 port: localNodePort,
                 nodeID: localNodeID
-              }
+            }
+
+            nodesArray.push(node);
+
+            var NodeAnnouceRequest = {
+              method: "NODE_ANNOUCE",
+              nodes: nodesArray
             }
 
             connection.sendUTF(JSON.stringify(NodeAnnouceRequest));
@@ -121,7 +126,7 @@ client.on('connect', function(connection) {
 
 
 
-client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
+client.connect('ws://localhost:6689//', 'cuddy-protocol');
 
 
 /* Ledgers */
@@ -290,6 +295,8 @@ wsServer.on('request', function(request) {
 
             i = 0;
             for(var attribute in json.nodes){
+
+              //console.log(JSON.stringify(json.nodes[0]));
 
               nodeid = json.nodes[i].nodeID;
               var contact = {
