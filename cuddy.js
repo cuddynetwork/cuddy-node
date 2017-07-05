@@ -140,6 +140,50 @@ wsServer = new WebSocketServer({
 });
 
 
+function arrayBufferToString(buffer){
+    var byteArray = new Uint8Array(buffer);
+    var str = "", cc = 0, numBytes = 0;
+    for(var i=0, len = byteArray.length; i<len; ++i){
+        var v = byteArray[i];
+        if(numBytes > 0){
+            //2 bit determining that this is a tailing byte + 6 bit of payload
+            if((cc&192) === 192){
+                //processing tailing-bytes
+                cc = (cc << 6) | (v & 63);
+            }else{
+                throw new Error("this is no tailing-byte");
+            }
+        }else if(v < 128){
+            //single-byte
+            numBytes = 1;
+            cc = v;
+        }else if(v < 192){
+            //these are tailing-bytes
+            throw new Error("invalid byte, this is a tailing-byte")
+        }else if(v < 224){
+            //3 bits of header + 5bits of payload
+            numBytes = 2;
+            cc = v & 31;
+        }else if(v < 240){
+            //4 bits of header + 4bit of payload
+            numBytes = 3;
+            cc = v & 15;
+        }else{
+            //UTF-8 theoretically supports up to 8 bytes containing up to 42bit of payload
+            //but JS can only handle 16bit.
+            throw new Error("invalid encoding, value out of range")
+        }
+
+        if(--numBytes === 0){
+            str += String.fromCharCode(cc);
+        }
+    }
+    if(numBytes){
+        throw new Error("the bytes don't sum up");
+    }
+    return str;
+}
+
 /* Events listening */
 
 // WebSocket server
@@ -148,7 +192,7 @@ wsServer.on('request', function(request) {
 
   var connection = request.accept('cuddy-protocol', request.origin);
 
-  console.log('Remote node with address ' + connection.remoteAddress + ' connected!');
+  console.log(new Date(dt.now()) + " " + colors.green('Remote node with address ' + connection.remoteAddress + ' connected!'));
 
   connection.on('connect', function(connection) {
     // close user connection
@@ -194,8 +238,7 @@ wsServer.on('request', function(request) {
               var contact = {
                   id: new Buffer(json.nodes[i].nodeID),
                   host: json.nodes[i].address,
-                  port: json.nodes[i].port,
-                  vectorClock: 0
+                  port: json.nodes[i].port
               };
 
               kBucket.add(contact)
@@ -208,28 +251,42 @@ wsServer.on('request', function(request) {
           }
 
 
-         console.log(kBucket.get(new Buffer('hukh676stdf7s8afos7mfoasmuf9a8sjd98sa')));
-         //console.log(kBucket.toArray());
-
-
        } else if (json.method == "FIND_NODE") {
             /// send to other node nodes which you know
-            console.log('new Date(dt.now()) + " " + Received FIND_NODE request from remote client');
+            console.log(new Date(dt.now()) + " " + 'Received FIND_NODE request from remote client');
 
-            console.log('new Date(dt.now()) + " " + Sending NODE_ANNOUCE to remote node');
 
-            var bucketNodesArray = kBucket.toArray()
+            var kbucketNodesArray = kBucket.toArray()
+            var bucketNodesArray = []
+
+            i = 0;
+            for(var attribute in kbucketNodesArray){
+              bufferNodeID = kbucketNodesArray[i].id;
+              nodeID = arrayBufferToString(bufferNodeID);
+              port = kbucketNodesArray[i].port;
+              address = kbucketNodesArray[i].host;
+
+              var node = {
+                nodeID: nodeID,
+                port: port,
+                address: address
+              }
+
+              bucketNodesArray.push(node);
+              i++;
+            }
 
             var NodeAnnouceResponse = {
               method: "NODE_ANNOUCE",
               nodes: bucketNodesArray
             }
 
+            console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node');
             connection.sendUTF(JSON.stringify(NodeAnnouceResponse));
 
         }  else if (json.name == "PING") {
             /// handle Ping with Pong responde send
-            console.log('new Date(dt.now()) + " " + Received PING message from remote client, so sending PONG :D');
+            console.log(new Date(dt.now()) + " " + 'Received PING message from remote client, so sending PONG :D');
 
             var PongResponse = {
               method: "PONG",
