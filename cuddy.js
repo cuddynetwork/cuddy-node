@@ -289,7 +289,7 @@ wsServer.on('request', function(request) {
               kBucket.add(contact)
 
             } else {
-                console.log(new Date(dt.now()) + " " + 'Contact ' + JSON.stringify(contact) + ' already exist in bucket');
+                console.log(new Date(dt.now()) + " " + 'Contact ' + JSON.stringify(json.nodes[i]) + ' already exist in bucket');
             }
 
             i++;
