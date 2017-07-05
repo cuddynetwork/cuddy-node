@@ -39,8 +39,6 @@ var kBucket = new KBucket({
     localNodeId: new Buffer("ffcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b9121876e9576309183") // default: random data
 })
 
-var PongQueue = [];
-
 var CollectTokensBucket = [];
 
 firstrun = true; //TMP
