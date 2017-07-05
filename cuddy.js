@@ -10,6 +10,7 @@ var crypto = require('crypto');
 var KBucket = require('k-bucket');
 var colors = require('colors/safe');
 var dateTime = require('node-datetime');
+var WebSocketClient = require('websocket').client;
 
 
 /* Constants */
@@ -62,6 +63,48 @@ localNodePort = "6689";
 console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 /* Broadcast node to the Cuddy network */
+
+var client = new WebSocketClient();
+
+client.on('connectFailed', function(error) {
+    console.log('Connect Error: ' + error.toString());
+});
+
+client.on('connect', function(connection) {
+    console.log('WebSocket Client Connected');
+    connection.on('error', function(error) {
+        console.log("Connection Error: " + error.toString());
+    });
+    connection.on('close', function() {
+        console.log('echo-protocol Connection Closed');
+    });
+    connection.on('message', function(message) {
+        if (message.type === 'utf8') {
+            console.log("Received: '" + message.utf8Data + "'");
+        }
+    });
+
+    function annouceNode() {
+        if (connection.connected) {
+            var number = Math.round(Math.random() * 0xFFFFFF);
+            //connection.sendUTF(number.toString());
+            connection.sendUTF('{ "method": "NODE_ANNOUCE", "age": 42,   "nodes": [{  "address": "lakewik.pl",    "port": 6689,    "hostname": "node1.cuddy.lakewik.pl",    "nodeID": "iudsnyfsyfsdfndsi"}] }');
+
+          var FindNodeRequest = {
+            method: "FIND_NODE"
+          }
+
+            //connection.sendUTF(JSON.stringify(FindNodeRequest));
+            setTimeout(annouceNode, 5000);
+        }
+    }
+  //  sendNumber();
+  annouceNode();
+});
+
+
+
+client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
 
 
 /* Ledgers */
@@ -233,7 +276,7 @@ wsServer.on('request', function(request) {
 
               if (kBucket.get(new Buffer(json.nodes[i].nodeID)) == null) {
               // add contact to bucket
-              console.log(new Date(dt.now()) + " " + colors.yellow('Contact ' + json.nodes[i].nodeID + ' not in bucket, adding'));
+              console.log(new Date(dt.now()) + " " + colors.yellow('Contact ' + json.nodes[i] + ' not in bucket, adding'));
               nodeid = json.nodes[i].nodeID;
               var contact = {
                   id: new Buffer(json.nodes[i].nodeID),
@@ -244,7 +287,7 @@ wsServer.on('request', function(request) {
               kBucket.add(contact)
 
             } else {
-                console.log(new Date(dt.now()) + " " + 'Contact ' + json.nodes[i].nodeID + ' already exist in bucket');
+                console.log(new Date(dt.now()) + " " + 'Contact ' + JSON.stringify(contact) + ' already exist in bucket');
             }
 
             i++;
