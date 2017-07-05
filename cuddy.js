@@ -355,7 +355,9 @@ wsServer.on('request', function(request) {
 
   connection.on('close', function(connection) {
     // close user connection
-  });
+
+  });  console.log(new Date(dt.now()) + " " + colors.blue('Remote node with address ' + connection.remoteAddress + ' disconnected!'));
+
 });
 
 
