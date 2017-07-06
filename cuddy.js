@@ -142,7 +142,7 @@ getOtherNodes();
 
 
 
-//client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
+client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
 //setTimeout(getOtherNodes, 1000);
 
 
@@ -339,7 +339,7 @@ wsServer.on('request', function(request) {
               nodes: bucketNodesArray
             }
 
-            console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node');
+            console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node' + connection.remoteAddress);
             WebSocketClientManager.sendMessage (connection.remoteAddress + ":6689", JSON.stringify(NodeAnnouceResponse));
             //connection.sendUTF();
 
