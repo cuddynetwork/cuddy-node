@@ -72,15 +72,12 @@ console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 var client = new WebSocketClient();
 
-connections_array = [];
-
 client.on('connectFailed', function(error) {
     console.log('Connect Error: ' + error.toString());
 });
 
 client.on('connect', function(connection) {
     console.log('WebSocket Client Connected');
-    connections_array.push(connection);
     connection.on('error', function(error) {
         console.log("Connection Error: " + error.toString());
     });
@@ -95,6 +92,46 @@ client.on('connect', function(connection) {
 
 
 
+    function annouceNode () {
+
+      if (connection.connected) {
+            var nodesArray = [];
+
+            var node =  {
+                address: localNodeIP,
+                port: localNodePort,
+                nodeID: localNodeID
+            }
+
+            nodesArray.push(node);
+
+            var NodeAnnouceRequest = {
+              method: "NODE_ANNOUCE",
+              nodes: nodesArray
+            }
+
+            connection.sendUTF(JSON.stringify(NodeAnnouceRequest));
+          }
+            setTimeout(annouceNode, 5000);
+
+    }
+
+
+    function getOtherNodes() {
+        if (connection.connected) {
+
+          var FindNodeRequest = {
+            method: "FIND_NODE"
+          }
+            connection.sendUTF(JSON.stringify(FindNodeRequest));
+            setTimeout(getOtherNodes, 5000);
+        }
+    }
+
+    annouceNode();
+getOtherNodes();
+
+
 
 
 
@@ -103,47 +140,13 @@ client.on('connect', function(connection) {
 
 //module.exports.annouceNode();
 
-function annouceNode () {
-
-  if (connections_array[0].connected) {
-        var nodesArray = [];
-
-        var node =  {
-            address: localNodeIP,
-            port: localNodePort,
-            nodeID: localNodeID
-        }
-
-        nodesArray.push(node);
-
-        var NodeAnnouceRequest = {
-          method: "NODE_ANNOUCE",
-          nodes: nodesArray
-        }
-
-        connections_array[0].sendUTF(JSON.stringify(NodeAnnouceRequest));
-      }
-        setTimeout(annouceNode, 5000);
-
-}
-
-
-function getOtherNodes() {
-    if (connections_array[0].connected) {
-
-      var FindNodeRequest = {
-        method: "FIND_NODE"
-      }
-        connections_array[0].sendUTF(JSON.stringify(FindNodeRequest));
-        setTimeout(getOtherNodes, 5000);
-    }
-}
-
 
 
 //client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
-  //setTimeout(getOtherNodes, 5000);
-    //setTimeout(annouceNode, 5000);
+//setTimeout(getOtherNodes, 1000);
+
+
+  //  setTimeout(annouceNode, 1000);
 //annouceNode();
 //getOtherNodes();
 //client.emit("sdsd");
@@ -182,8 +185,7 @@ server.listen(DEFAULT_PORT_COMUNICATION, function() { });
 
 // create the server
 wsServer = new WebSocketServer({
-  httpServer: server,
-  autoAcceptConnections: true
+  httpServer: server
 });
 
 
