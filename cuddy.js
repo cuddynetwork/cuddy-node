@@ -340,7 +340,7 @@ wsServer.on('request', function(request) {
             }
 
             console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node' + connection.remoteAddress);
-            WebSocketClientManager.sendMessage (connection.remoteAddress + ":6689", JSON.stringify(NodeAnnouceResponse));
+            WebSocketClientManager.sendMessage (connection.remoteAddress.replace("::ffff:", "") + ":6689", JSON.stringify(NodeAnnouceResponse));
             //connection.sendUTF();
 
         }  else if (json.method == "PING") {
