@@ -13,6 +13,7 @@ var dateTime = require('node-datetime');
 var WebSocketClient = require('websocket').client;
 
 var ContractsLedgerProcessor = require('./cuddy-events/ContractsLedgerProcessor.js');
+var WebSocketClientManager = require('./cuddy-events/WebSocketClientManager.js');
 var Structures = require('./resources/Structures.js');
 var Constants = require('./resources/Constants.js');
 
@@ -62,7 +63,7 @@ localNodeID = "fdcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b912
 localNodeIP = "79.231.22.170";
 localNodePort = "6689";
 
-var Node = Structures.Node;
+//var Node = Structures.Node;
 var Contract = Structures.Contract;
 
 console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
@@ -71,12 +72,15 @@ console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 var client = new WebSocketClient();
 
+connections_array = [];
+
 client.on('connectFailed', function(error) {
     console.log('Connect Error: ' + error.toString());
 });
 
 client.on('connect', function(connection) {
     console.log('WebSocket Client Connected');
+    connections_array.push(connection);
     connection.on('error', function(error) {
         console.log("Connection Error: " + error.toString());
     });
@@ -89,47 +93,60 @@ client.on('connect', function(connection) {
         }
     });
 
-    function annouceNode() {
-        if (connection.connected) {
 
-            var nodesArray = [];
 
-            var node =  {
-                address: localNodeIP,
-                port: localNodePort,
-                nodeID: localNodeID
-            }
 
-            nodesArray.push(node);
 
-            var NodeAnnouceRequest = {
-              method: "NODE_ANNOUCE",
-              nodes: nodesArray
-            }
-
-            connection.sendUTF(JSON.stringify(NodeAnnouceRequest));
-            setTimeout(annouceNode, 5000);
-        }
-    }
-
-    function getOtherNodes() {
-        if (connection.connected) {
-
-          var FindNodeRequest = {
-            method: "FIND_NODE"
-          }
-            connection.sendUTF(JSON.stringify(FindNodeRequest));
-            setTimeout(getOtherNodes, 5000);
-        }
-    }
-
-    annouceNode();
-    getOtherNodes();
 
 
 });
 
-client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
+//module.exports.annouceNode();
+
+function annouceNode () {
+
+  if (connections_array[0].connected) {
+        var nodesArray = [];
+
+        var node =  {
+            address: localNodeIP,
+            port: localNodePort,
+            nodeID: localNodeID
+        }
+
+        nodesArray.push(node);
+
+        var NodeAnnouceRequest = {
+          method: "NODE_ANNOUCE",
+          nodes: nodesArray
+        }
+
+        connections_array[0].sendUTF(JSON.stringify(NodeAnnouceRequest));
+      }
+        setTimeout(annouceNode, 5000);
+
+}
+
+
+function getOtherNodes() {
+    if (connections_array[0].connected) {
+
+      var FindNodeRequest = {
+        method: "FIND_NODE"
+      }
+        connections_array[0].sendUTF(JSON.stringify(FindNodeRequest));
+        setTimeout(getOtherNodes, 5000);
+    }
+}
+
+
+
+//client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
+  //setTimeout(getOtherNodes, 5000);
+    //setTimeout(annouceNode, 5000);
+//annouceNode();
+//getOtherNodes();
+//client.emit("sdsd");
 
 /* Create WebSocket Listening Server */
 
@@ -165,7 +182,8 @@ server.listen(DEFAULT_PORT_COMUNICATION, function() { });
 
 // create the server
 wsServer = new WebSocketServer({
-  httpServer: server
+  httpServer: server,
+  autoAcceptConnections: true
 });
 
 
@@ -222,6 +240,11 @@ wsServer.on('request', function(request) {
   var connection = request.accept('cuddy-protocol', request.origin);
 
   console.log(new Date(dt.now()) + " " + colors.green('Remote node with address ' + connection.remoteAddress + ' connected!'));
+
+  //client.connect('ws://' + connection.remoteAddress.replace("::ffff:", "") + ':6689//', 'cuddy-protocol');
+
+  //console.log(connection);
+
 
   connection.on('connect', function(connection) {
     // close user connection
@@ -315,7 +338,8 @@ wsServer.on('request', function(request) {
             }
 
             console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node');
-            connection.sendUTF(JSON.stringify(NodeAnnouceResponse));
+            WebSocketClientManager.sendMessage (connection.remoteAddress + ":6689", JSON.stringify(NodeAnnouceResponse));
+            //connection.sendUTF();
 
         }  else if (json.method == "PING") {
             /// handle Ping with Pong responde send
@@ -329,6 +353,8 @@ wsServer.on('request', function(request) {
                   port: localNodePort
                 }
             }
+
+              /// create new client connection
 
               connection.sendUTF(JSON.stringify(PongResponse));
         }
@@ -345,6 +371,17 @@ wsServer.on('request', function(request) {
 
                   connection.sendUTF('{"result":"SAVED"}');
 
+          }  else if (json.method == "PUBLISH_CONTRACT_NODE") {
+
+                  console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT message from remote client, inserting contract '+JSON.stringify(json.contract) + ' to ledger');
+
+                  /// publish node that contains contract content
+                  ContractsLedgerProcessor.addNewNodeToContract(json.contract.tx, json.contract);
+
+                  connection.sendUTF('{"result":"SAVED"}');
+
+          } else {
+            console.log(new Date(dt.now()) + " " + 'Received unrecognized message from remote client');
           }
     }
   });
