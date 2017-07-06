@@ -14,12 +14,13 @@ var WebSocketClient = require('websocket').client;
 
 var ContractsLedgerProcessor = require('./cuddy-events/ContractsLedgerProcessor.js');
 var Structures = require('./resources/Structures.js');
+var Constants = require('./resources/Constants.js');
 
 
 /* Constants */
 
-const DEFAULT_PORT_PUBLIC = 80;
-const DEFAULT_PORT_COMUNICATION = 6689;
+const DEFAULT_PORT_PUBLIC = Constants.DEFAULT_PORT_PUBLIC;
+const DEFAULT_PORT_COMUNICATION = Constants.DEFAULT_PORT_COMUNICATION;
 
 function searchMoreNodes(nodes_count) {
     // Search and return Cuddy nodes
@@ -336,6 +337,8 @@ wsServer.on('request', function(request) {
             connection.sendUTF('{  }');
 
           } else if (json.method == "PUBLISH_CONTRACT") {
+
+                  console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT message from remote client, inserting contract '+JSON.stringify(json.contract) + ' to ledger');
 
                   /// publish negotiated contract to the network
                   ContractsLedgerProcessor.pushContract(json.contract.tx, json.contract);
