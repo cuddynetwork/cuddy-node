@@ -1,4 +1,6 @@
 
+var WebSocketClient = require('websocket').client;
+
 
 
 module.exports = {
