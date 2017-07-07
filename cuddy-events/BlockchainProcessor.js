@@ -15,4 +15,9 @@ function saveContractResourceLocation() {
    // Save next resource location and assign to contractId
 
 
+    
+}
+
+function getPrivateKey(){
+    // Need to sign container with private key from address of tokens
 }
