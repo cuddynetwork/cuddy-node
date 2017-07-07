@@ -13,19 +13,51 @@ var Contract = Structures.Contract;
 
 var JsonDB = require('node-json-db');
 
-var db = new JsonDB("cuddy-contracts-ledger", true, true);
+var db = new JsonDB("/home/lakewik/.cuddy/ledgers/cuddy-contracts-ledger", true, true);
 
 //db.save();
+
+
 
 module.exports = {
 
 addNewNodeToContract: function (contract_id, nodeID) {
 
-  nodes_count = (module.exports.countNodesInContract(contract_id)+1).toString();
+  /// firstly we must get the most actual contract nodes ledger from all nodes which storing this contract resources
 
-  db.push("/contracts/" + contract_id.toString() + "/nodes/" + nodes_count, nodeID);
+  var ContractNodeDetails  = {
+      storeBeginTimestamp: 0
+
+  }
+
+  //nodes_count = (module.exports.countNodesInContract(contract_id)+1).toString();
+
+  db.push("/contracts/" + contract_id.toString() + "/nodes/" + nodeID.toString(), ContractNodeDetails);
   db.save();
+
+  //// we must push this change to all connected nodes
+
   return true;
+
+},
+
+isContractExistOnNode: function (contractID, nodeID) {
+
+  try {
+    contract_nodes = module.exports.getContractNodes(contractID);
+
+    if (nodeID in contract_nodes) {
+      return true;
+    } else {
+      return false;
+    }
+
+  } catch (err) {
+      return false;
+  }
+
+
+  //return contract_nodes;
 
 },
 
@@ -63,7 +95,7 @@ downloadContractsLedger: function  (nodes_number) {
 
 },
 
-getContractNodesIds: function  (contract_id) {
+getContractNodes: function  (contract_id) {
 
   contract_nodes_ids = db.getData("/contracts/" + contract_id.toString() + "/nodes");
 
@@ -74,7 +106,7 @@ getContractNodesIds: function  (contract_id) {
 
 countNodesInContract: function  (contract_id) {
 
-  return Object.keys(module.exports.getContractNodesIds(contract_id)).length;
+  return Object.keys(module.exports.getContractNodes(contract_id)).length;
 
 },
 
