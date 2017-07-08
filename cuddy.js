@@ -16,7 +16,7 @@ var ContractsLedgerProcessor = require('./cuddy-events/ContractsLedgerProcessor.
 var WebSocketClientManager = require('./cuddy-events/WebSocketClientManager.js');
 var Structures = require('./resources/Structures.js');
 var Constants = require('./resources/Constants.js');
-
+var LocalNode = require('./cuddy-events/MyNode.js');
 
 /* Constants */
 
@@ -27,13 +27,7 @@ function searchMoreNodes(nodes_count) {
     // Search and return Cuddy nodes
 }
 
-function generateNodeID() {
-   // Generate unicate NodeID
 
-   var NodeID = crypto.randomBytes(40).toString('hex');
-     console.log(NodeID);
-   return NodeID;
-}
 
 /* Initialization */
 
@@ -46,22 +40,40 @@ var kBucket = new KBucket({
 
 var CollectTokensBucket = [];
 
-firstrun = true; //TMP
+firstrun = LocalNode.isFirstRun();
 
 if (firstrun) {
 
   console.log(colors.green("Performing initial node initialization...."));
 
-  generateNodeID(function(id) {
-      console.log(id);
-  });
+  var localNodeID = LocalNode.generateNodeID();
+  var localNodeIP = "89.231.22.170";
+  var localNodePort = "6689";
 
+  console.log(colors.green("Your Node ID is: " + localNodeID.toString()));
+
+  var LocalNodeDetails = {
+    id: localNodeID,
+    address:  localNodeIP,
+    port: localNodePort
+  }
+
+  LocalNode.saveLocalNodeDetails(LocalNodeDetails);
+  LocalNode.setInitialized();
+
+
+} else {
+
+  var LocalNodeDetails = LocalNode.getLocalNodeDetails();
+  var localNodeID = LocalNodeDetails.id;
+  var localNodeAddress = LocalNodeDetails.address;
+  var localNodePort = LocalNodeDetails.port;
 
 }
 
-localNodeID = "fdcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b9121876e9576309183";
-localNodeIP = "79.231.22.170";
-localNodePort = "6689";
+//localNodeID = "fdcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b9121876e9576309183";
+//localNodeIP = "79.231.22.170";
+//localNodePort = "6689";
 
 //var Node = Structures.Node;
 var Contract = Structures.Contract;
@@ -140,9 +152,12 @@ getOtherNodes();
 
 //module.exports.annouceNode();
 
+function connect() {
+  client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
+}
 
 
-client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
+setTimeout(connect, 5000);
 //setTimeout(getOtherNodes, 1000);
 
 
