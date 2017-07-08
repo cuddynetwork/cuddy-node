@@ -4,7 +4,7 @@
 */
 
 var Constants = require('../resources/Constants.js');
-var MyNode = require('./MyNode.js');
+var LocalNode = require('./MyNode.js');
 
 var http = require('http');
 var dateTime = require('node-datetime');
@@ -19,6 +19,11 @@ const DEFAULT_PORT_PUBLIC_SSL = Constants.DEFAULT_PORT_PUBLIC_SSL;
 const CONTAINERS_DEFAULT_SAVE_LOCATION = Constants.CONTAINERS_DEFAULT_SAVE_LOCATION;
 
 var fs = require('fs');
+
+var LocalNodeDetails = LocalNode.getLocalNodeDetails();
+var localNodeID = LocalNodeDetails.id;
+var localNodeAddress = LocalNodeDetails.address;
+var localNodePort = LocalNodeDetails.port;
 
 /* Initialization */
 
@@ -62,11 +67,14 @@ if (request.url.indexOf("/download") > -1) {
 } else {
   //// redirect to other node
   excludes = [];
+  excludes.push(localNodeID);
   other_node_id = ResourceLocationObtainer.getContractNodeId(requested_contract_id, "random", excludes);
 
   other_node_details = NodesLedgerProcessor.getNodeDetailsByID(other_node_id);
 
   console.log(other_node_details);
+
+  other_node_details.address;
 
   //  response.writeHead(302, {
   //    'Location': 'http://onet.pl'
