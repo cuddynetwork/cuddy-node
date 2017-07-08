@@ -25,7 +25,7 @@ npm install node-json-db
 
 ### Ports of project
 
-80 - standard port to resources
+80/443 - standard port to resources
 
 6686 - RPC to Wallet 
 
