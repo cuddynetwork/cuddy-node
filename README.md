@@ -10,9 +10,10 @@ NodeJS v8.1.3 +
 
 WebSocket
 
-JShshes,K-Bucket,Colors,Node-DateTime,Node-JSON-DB
+JShshes,K-Bucket,Colors,Node-DateTime,Node-JSON-DB,Osenv
 
-Ubuntu / MACOS
+Ubuntu 16.04 / MACOS 10.11
+
 ```bash
 npm install nodejs
 npm install websocket
@@ -21,6 +22,7 @@ npm install k-bucket
 npm install colors
 npm install node-datetime
 npm install node-json-db
+npm install osenv
 ```
 
 ### Ports of project
