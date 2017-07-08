@@ -8,6 +8,8 @@ var fs = require('fs');
 var osenv = require('osenv');
 var Structures = require('../resources/Structures.js');
 var Constants = require('../resources/Constants.js');
+var Hashes = require('jshashes');
+var crypto = require('crypto');
 
 const CONFIG_SAVE_LOCATION = Constants.CONFIG_SAVE_LOCATION;
 const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
@@ -44,6 +46,24 @@ module.exports = {
   getLocalNodeDetails: function () {
 
     return db.getData("/config/node");
+
+  },
+
+  getLocalNodeAddress: function () {
+
+    return db.getData("/config/node/address");
+
+  },
+
+  getLocalNodeIp: function () {
+
+    return db.getData("/config/node/Ip");
+
+  },
+
+  getLocalNodePort: function () {
+
+    return db.getData("/config/node/port");
 
   },
 
@@ -84,8 +104,8 @@ module.exports = {
         },
 
         initialized: 0,
-        ledgers_path: "",
-        containers_path: "",
+        ledgers_path: LEDGERS_DEFAULT_SAVE_LOCATION,
+        containers_path: CONTAINERS_DEFAULT_SAVE_LOCATION,
 
         contract_negotiation: {
           max_file_size: 0,
@@ -109,6 +129,10 @@ module.exports = {
 
   isFirstRun: function (local_node) {
 
+    if (module.exports.ifConfigFileExist() != true) {
+        module.exports.generateDefaultConfig();
+    }
+
     is_initialized = db.getData("/config/initialized").toString();
 
     if (is_initialized == "1") {
@@ -117,6 +141,24 @@ module.exports = {
       return true;
     }
 
+  },
+
+  setInitialized: function () {
+    // initialized == first run
+
+    return db.push("/config/initialized", 1);
+    return true;
+
+  },
+
+
+
+  generateNodeID: function () {
+     // Generate unicate NodeID
+
+     var NodeID = crypto.randomBytes(40).toString('hex');
+       //console.log(NodeID);
+     return NodeID;
   }
 
 };
