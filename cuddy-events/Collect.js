@@ -7,6 +7,8 @@
 var Structures = require('../resources/Structures.js');
 var Constants = require('../resources/Constants.js');
 
+const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
+
 
 /// Init JSON database ////
 
@@ -14,10 +16,20 @@ var JsonDB = require('node-json-db');
 
 var db = new JsonDB(LEDGERS_DEFAULT_SAVE_LOCATION + "/.cuddy/ledgers/cuddy-local-collect-tokens-ledger", true, true);
 
-const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
 
 
 module.exports = {
+
+  isTokenExist: function(collect_token_id) {
+
+    try {
+      db.getData("/collect_tokens/" + collect_token_id.toString()).toString();
+      return true;
+    } catch (err) {
+      return false;
+    }
+
+  },
 
   generateCollectToken: function() {
 
@@ -37,6 +49,13 @@ module.exports = {
 
     var collectTokenDetails = db.getData("/collect_tokens/" + collect_token_id.toString()).toString();
     return collectTokenDetails;
+
+  },
+
+  getCollectTokenContract: function(collect_token_id) {
+
+    var collectTokenContract = db.getData("/collect_tokens/" + collect_token_id.toString() + "/for_contract").toString();
+    return collectTokencontract;
 
   }
 
