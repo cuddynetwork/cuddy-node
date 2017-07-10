@@ -17,11 +17,14 @@ var WebSocketClientManager = require('./cuddy-events/WebSocketClientManager.js')
 var Structures = require('./resources/Structures.js');
 var Constants = require('./resources/Constants.js');
 var LocalNode = require('./cuddy-events/MyNode.js');
+var NodesLedgerProcessor = require('./cuddy-events/NodesLedgerProcessor.js');
+
 
 /* Constants */
 
 const DEFAULT_PORT_PUBLIC = Constants.DEFAULT_PORT_PUBLIC;
 const DEFAULT_PORT_COMUNICATION = Constants.DEFAULT_PORT_COMUNICATION;
+const DEFAULT_TOKEN_EXPIRATION_PERIOD = Constants.DEFAULT_TOKEN_EXPIRATION_PERIOD;
 
 function searchMoreNodes(nodes_count) {
     // Search and return Cuddy nodes
@@ -71,10 +74,6 @@ if (firstrun) {
 
 }
 
-//localNodeID = "fdcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b9121876e9576309183";
-//localNodeIP = "79.231.22.170";
-//localNodePort = "6689";
-
 //var Node = Structures.Node;
 var Contract = Structures.Contract;
 
@@ -82,89 +81,6 @@ console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 /* Broadcast node to the Cuddy network */
 
-var client = new WebSocketClient();
-
-client.on('connectFailed', function(error) {
-    console.log('Connect Error: ' + error.toString());
-});
-
-client.on('connect', function(connection) {
-    console.log('WebSocket Client Connected');
-    connection.on('error', function(error) {
-        console.log("Connection Error: " + error.toString());
-    });
-    connection.on('close', function() {
-        console.log('echo-protocol Connection Closed');
-    });
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') {
-            console.log("Received: '" + message.utf8Data + "'");
-        }
-    });
-
-
-
-    function annouceNode () {
-
-      if (connection.connected) {
-            var nodesArray = [];
-
-            var node =  {
-                address: localNodeIP,
-                port: localNodePort,
-                nodeID: localNodeID
-            }
-
-            nodesArray.push(node);
-
-            var NodeAnnouceRequest = {
-              method: "NODE_ANNOUCE",
-              nodes: nodesArray
-            }
-
-            connection.sendUTF(JSON.stringify(NodeAnnouceRequest));
-          }
-            setTimeout(annouceNode, 5000);
-
-    }
-
-
-    function getOtherNodes() {
-        if (connection.connected) {
-
-          var FindNodeRequest = {
-            method: "FIND_NODE"
-          }
-            connection.sendUTF(JSON.stringify(FindNodeRequest));
-            setTimeout(getOtherNodes, 5000);
-        }
-    }
-
-    annouceNode();
-getOtherNodes();
-
-
-
-
-
-
-});
-
-//module.exports.annouceNode();
-
-function connect() {
-  client.connect('ws://cuddy.network:6689//', 'cuddy-protocol');
-}
-
-
-setTimeout(connect, 5000);
-//setTimeout(getOtherNodes, 1000);
-
-
-  //  setTimeout(annouceNode, 1000);
-//annouceNode();
-//getOtherNodes();
-//client.emit("sdsd");
 
 /* Create WebSocket Listening Server */
 
@@ -203,50 +119,6 @@ wsServer = new WebSocketServer({
   httpServer: server
 });
 
-
-function arrayBufferToString(buffer){
-    var byteArray = new Uint8Array(buffer);
-    var str = "", cc = 0, numBytes = 0;
-    for(var i=0, len = byteArray.length; i<len; ++i){
-        var v = byteArray[i];
-        if(numBytes > 0){
-            //2 bit determining that this is a tailing byte + 6 bit of payload
-            if((cc&192) === 192){
-                //processing tailing-bytes
-                cc = (cc << 6) | (v & 63);
-            }else{
-                throw new Error("this is no tailing-byte");
-            }
-        }else if(v < 128){
-            //single-byte
-            numBytes = 1;
-            cc = v;
-        }else if(v < 192){
-            //these are tailing-bytes
-            throw new Error("invalid byte, this is a tailing-byte")
-        }else if(v < 224){
-            //3 bits of header + 5bits of payload
-            numBytes = 2;
-            cc = v & 31;
-        }else if(v < 240){
-            //4 bits of header + 4bit of payload
-            numBytes = 3;
-            cc = v & 15;
-        }else{
-            //UTF-8 theoretically supports up to 8 bytes containing up to 42bit of payload
-            //but JS can only handle 16bit.
-            throw new Error("invalid encoding, value out of range")
-        }
-
-        if(--numBytes === 0){
-            str += String.fromCharCode(cc);
-        }
-    }
-    if(numBytes){
-        throw new Error("the bytes don't sum up");
-    }
-    return str;
-}
 
 /* Events listening */
 
@@ -287,7 +159,20 @@ wsServer.on('request', function(request) {
 
         if (json.method == "COLLECT") {
             /// handle Collect request
+            var collectTokenDetails = {
+                totalIncomingDataSize: json.parametrs.data_size,
+                expiration_time: DEFAULT_TOKEN_EXPIRATION_PERIOD + new Date(),
+                applicant_hash: json.parametrs.applicant_hash,
+                for_contract: json.parametrs.contract_id
+            }
+
+            collectTokenId = CollectTokenManager.generateCollectToken();
+
+            CollectTokenManager.putCollectTokenAndDetails(collectTokenId, collectTokenDetails);
+
             console.log(new Date(dt.now()) + " " + 'Received COLLECT request from remote client');
+
+            connection.sendUTF('{"collect_token":"' + collectTokenId + '"}');
 
         } else if (json.method == "NEGOTIATE") {
             /// handle Contract Negotiation request
@@ -303,22 +188,16 @@ wsServer.on('request', function(request) {
               //console.log(JSON.stringify(json.nodes[0]));
 
               nodeid = json.nodes[i].nodeID;
-              var contact = {
-                  id: new Buffer(json.nodes[i].nodeID),
-                  host: json.nodes[i].address,
+              var node_details = {
+                  ip: json.nodes[i].address,
                   port: json.nodes[i].port
               };
 
-              if (kBucket.get(new Buffer(json.nodes[i].nodeID)) == null) {
-              // add contact to bucket
-                console.log(new Date(dt.now()) + " " + colors.yellow('Contact ' +  JSON.stringify(json.nodes[i]) + ' not in bucket, adding'));
-
-
-              kBucket.add(contact)
-
-            } else {
-                console.log(new Date(dt.now()) + " " + 'Contact ' + JSON.stringify(json.nodes[i]) + ' already exist in bucket');
-            }
+              if (NodesLedgerProcessor.isNodeInLedger(nodeid)) {
+                  NodesLedgerProcessor.insertNode(nodeid, node_details);
+              }  else {
+                  console.log(new Date(dt.now()) + " " + 'Contact ' + JSON.stringify(json.nodes[i]) + ' already exist in ledger');
+              }
 
             i++;
           }
@@ -328,30 +207,18 @@ wsServer.on('request', function(request) {
             /// send to other node nodes which you know
             console.log(new Date(dt.now()) + " " + 'Received FIND_NODE request from remote client');
 
+            asked_nodeID = json.parametrs.nodeID.toString();
+            asked_node_details = NodesLedgerProcessor.getNodeDetailsByID(asked_nodeID);
 
-            var kbucketNodesArray = kBucket.toArray()
-            var bucketNodesArray = []
-
-            i = 0;
-            for(var attribute in kbucketNodesArray){
-              bufferNodeID = kbucketNodesArray[i].id;
-              nodeID = arrayBufferToString(bufferNodeID);
-              port = kbucketNodesArray[i].port;
-              address = kbucketNodesArray[i].host;
-
-              var node = {
-                nodeID: nodeID,
-                port: port,
-                address: address
-              }
-
-              bucketNodesArray.push(node);
-              i++;
+            var node = {
+              nodeID: asked_nodeID,
+              port: asked_node_details.port,
+              address: asked_node_details.address
             }
 
             var NodeAnnouceResponse = {
               method: "NODE_ANNOUCE",
-              nodes: bucketNodesArray
+              nodes: node
             }
 
             console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node' + connection.remoteAddress);
@@ -384,16 +251,16 @@ wsServer.on('request', function(request) {
                   console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT message from remote client, inserting contract '+JSON.stringify(json.contract) + ' to ledger');
 
                   /// publish negotiated contract to the network
-                  ContractsLedgerProcessor.pushContract(json.contract.tx, json.contract);
+                  ContractsLedgerProcessor.pushContract(JSON.stringify(json.contract.tx), JSON.stringify(json.contract));
 
                   connection.sendUTF('{"result":"SAVED"}');
 
           }  else if (json.method == "PUBLISH_CONTRACT_NODE") {
 
-                  console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT message from remote client, inserting contract '+JSON.stringify(json.contract) + ' to ledger');
+                  console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT_NODE message from remote client, inserting node ' + JSON.stringify(json.node.id) + ' contract '+JSON.stringify(json.contract) + ' to ledger');
 
                   /// publish node that contains contract content
-                  ContractsLedgerProcessor.addNewNodeToContract(json.contract.tx, json.contract);
+                  ContractsLedgerProcessor.addNewNodeToContract(JSON.stringify(json.contract_id), JSON.stringify(json.node.id));
 
                   connection.sendUTF('{"result":"SAVED"}');
 
