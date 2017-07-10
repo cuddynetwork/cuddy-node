@@ -11,6 +11,7 @@ var KBucket = require('k-bucket');
 var colors = require('colors/safe');
 var dateTime = require('node-datetime');
 var WebSocketClient = require('websocket').client;
+const getIP = require('external-ip')();
 
 var ContractsLedgerProcessor = require('./cuddy-events/ContractsLedgerProcessor.js');
 var WebSocketClientManager = require('./cuddy-events/WebSocketClientManager.js');
@@ -25,6 +26,8 @@ var NodesLedgerProcessor = require('./cuddy-events/NodesLedgerProcessor.js');
 const DEFAULT_PORT_PUBLIC = Constants.DEFAULT_PORT_PUBLIC;
 const DEFAULT_PORT_COMUNICATION = Constants.DEFAULT_PORT_COMUNICATION;
 const DEFAULT_TOKEN_EXPIRATION_PERIOD = Constants.DEFAULT_TOKEN_EXPIRATION_PERIOD;
+const INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT = Constants.INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
+
 
 function searchMoreNodes(nodes_count) {
     // Search and return Cuddy nodes
@@ -37,23 +40,30 @@ function searchMoreNodes(nodes_count) {
 var dt = dateTime.create();
 dt.format('m/d/Y H:M:S');
 
-var kBucket = new KBucket({
-    localNodeId: new Buffer("ffcdd3449fe7c039ae93aac4831768ace43c6ffa243103d1b871f90add264b9121876e9576309183") // default: random data
-})
-
 var CollectTokensBucket = [];
 
 firstrun = LocalNode.isFirstRun();
 
+console.log(colors.green(new Date(dt.now()) + " NETWORK :: Trying to obtain your external IP address...."));
+
+
+getIP((err, ip) => {
+   if (err) {
+       throw err;
+   }
+   console.log(ip);
+   var localNodeIP = ip;
+});
+
 if (firstrun) {
 
-  console.log(colors.green("Performing initial node initialization...."));
+  console.log(new Date(dt.now()) + colors.green(" NODE :: Performing initial node initialization...."));
 
   var localNodeID = LocalNode.generateNodeID();
-  var localNodeIP = "89.231.22.170";
-  var localNodePort = "6689";
 
-  console.log(colors.green("Your Node ID is: " + localNodeID.toString()));
+  var localNodePort = DEFAULT_PORT_COMUNICATION;
+
+  console.log(new Date(dt.now()) + colors.green(" Your Node ID is: " + localNodeID.toString()));
 
   var LocalNodeDetails = {
     id: localNodeID,
@@ -69,7 +79,11 @@ if (firstrun) {
 
   var LocalNodeDetails = LocalNode.getLocalNodeDetails();
   var localNodeID = LocalNodeDetails.id;
-  var localNodeAddress = LocalNodeDetails.address;
+  if (localNodeIP !=  LocalNodeDetails.address) {
+    LocalNode.saveLocalNodeIP(localNodeIP);
+  } else {
+    var localNodeIP = LocalNodeDetails.address;
+  }
   var localNodePort = LocalNodeDetails.port;
 
 }
@@ -80,6 +94,35 @@ var Contract = Structures.Contract;
 console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 /* Broadcast node to the Cuddy network */
+
+
+recipientNodesCount = INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
+nodes_in_ledger_count = NodesLedgerProcessor.countNodesInLedger();
+if (nodes_in_ledger_count < recipientNodesCount) {
+  recipientNodesCount = nodes_in_ledger_count;
+}
+
+i = 0;
+while (i < recipientNodesCount) {
+  random_node_details = NodesLedgerProcessor.getRandomNodeDetails()
+
+  var local_node = {
+    nodeID: localNodeID,
+    port: localNodePort,
+    address: localNodeIP
+  }
+
+  var NodeAnnouceMessage = {
+    method: "NODE_ANNOUCE",
+    nodes: local_node
+  }
+
+  console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' + (i+1).toString()));
+
+  WebSocketClientManager.sendMessage (random_node_details.ip + ":" + random_node_details.port, JSON.stringify(NodeAnnouceMessage));
+  i++;
+}
+
 
 
 /* Create WebSocket Listening Server */
