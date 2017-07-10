@@ -14,7 +14,7 @@ var Contract = Structures.Contract;
 
 var JsonDB = require('node-json-db');
 
-var db = new JsonDB("/home/lakewik/.cuddy/cuddy-nodes-ledger", true, true);
+var db = new JsonDB("/home/lakewik/.cuddy/ledgers/cuddy-nodes-ledger", true, true);
 
 ///////
 
@@ -29,7 +29,35 @@ module.exports = {
 
     return db.push("/nodes/" + nodeID.toString(), node_details);
 
-  }
+  },
+
+  getRandomNodeDetails: function () {
+
+    nodes = db.getData("/nodes");
+    random_node = nodes[Object.keys(nodes)[Math.floor(Math.random()*Object.keys(nodes).length)]]
+    return random_node;
+
+  },
+
+  countNodesInLedger: function () {
+
+    nodes = db.getData("/nodes");
+    nodes_count = Object.keys(nodes).length;
+    return nodes_count;
+
+  },
+
+
+  isNodeInLedger: function (nodeID) {
+
+    try {
+      node = db.getData("/nodes/" + nodeID.toString());
+      return true;
+    } catch (err) {
+      return false;
+    }
+
+  },
 
 };
 
@@ -47,4 +75,4 @@ var Node = {
 
 };
 
-//module.exports.insertNode("piesek", Node);
+//console.log(module.exports.countNodesInLedger());
