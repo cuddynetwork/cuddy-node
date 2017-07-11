@@ -93,8 +93,18 @@ var Contract = Structures.Contract;
 
 console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
-/* Broadcast node to the Cuddy network */
+/* Load ROOT-NODES */
+root_nodes = LocalNode.getRootNodes();
 
+/* Insert ROOT-NODES to nodes ledger */
+for (var attr in root_nodes) {
+    NodesLedgerProcessor.insertNode(attr, root_nodes[attr]);
+}
+
+
+/* Synchronize your global ledgers with root nodes */
+
+/* Broadcast this node to the Cuddy network */
 
 recipientNodesCount = INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
 nodes_in_ledger_count = NodesLedgerProcessor.countNodesInLedger();
@@ -122,7 +132,6 @@ while (i < recipientNodesCount) {
   WebSocketClientManager.sendMessage (random_node_details.ip + ":" + random_node_details.port, JSON.stringify(NodeAnnouceMessage));
   i++;
 }
-
 
 
 /* Create WebSocket Listening Server */
@@ -238,8 +247,9 @@ wsServer.on('request', function(request) {
 
               if (NodesLedgerProcessor.isNodeInLedger(nodeid)) {
                   NodesLedgerProcessor.insertNode(nodeid, node_details);
+                  console.log(new Date(dt.now()) + " " + 'Adding node ' + JSON.stringify(json.nodes[i]) + ' to ledger');
               }  else {
-                  console.log(new Date(dt.now()) + " " + 'Contact ' + JSON.stringify(json.nodes[i]) + ' already exist in ledger');
+                  console.log(new Date(dt.now()) + " " + 'Node ' + JSON.stringify(json.nodes[i]) + ' already exist in ledger');
               }
 
             i++;
@@ -289,7 +299,50 @@ wsServer.on('request', function(request) {
             /// handle Pong with to que get (PongQueue)
             connection.sendUTF('{  }');
 
-          } else if (json.method == "PUBLISH_CONTRACT") {
+          }  else if (json.method == "SYNC_NODES_LEDGER") {
+              my_nodes_ledger_array = []
+              remote_nodes_ledger = json.nodes_ledger;
+              local_nods_ledger = NodesLedgerProcessor.getNodes();
+              for (var nodeID in local_nods_ledger) {
+                my_nodes_ledger_array.push(nodeID);
+              }
+
+              console.log(my_nodes_ledger_array);
+              console.log(remote_nodes_ledger);
+
+              nodes_ids_to_annouce = my_nodes_ledger_array.filter(function(x) { return remote_nodes_ledger.indexOf(x) < 0 })
+
+              nodes_to_annouce_array = [];
+
+              for (var index in nodes_ids_to_annouce) {
+
+                node_details = NodesLedgerProcessor.getNodeDetailsByID(nodes_ids_to_annouce[index]);
+
+                var node = {
+                  nodeID: nodes_ids_to_annouce[index],
+                  port: node_details.port,
+                  address: node_details.address
+                }
+
+              nodes_to_annouce_array.push(node);
+            }
+
+              console.log(nodes_ids_to_annouce);
+
+
+              var NodeAnnouceResponse = {
+                method: "NODE_ANNOUCE",
+                nodes: nodes_to_annouce_array
+              }
+
+              console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node' + connection.remoteAddress);
+              WebSocketClientManager.sendMessage (connection.remoteAddress.replace("::ffff:", "") + ":6689", JSON.stringify(NodeAnnouceResponse));
+
+
+              /// handle Pong with to que get (PongQueue)
+              connection.sendUTF('{  }');
+
+            } else if (json.method == "PUBLISH_CONTRACT") {
 
                   console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT message from remote client, inserting contract '+JSON.stringify(json.contract) + ' to ledger');
 
@@ -308,7 +361,7 @@ wsServer.on('request', function(request) {
                   connection.sendUTF('{"result":"SAVED"}');
 
           } else {
-            console.log(new Date(dt.now()) + " " + 'Received unrecognized message from remote client');
+            console.log(new Date(dt.now()) + " " + 'Received unrecognized message from remote client' + JSON.stringify(json));
           }
     }
   });
