@@ -84,6 +84,18 @@ module.exports = {
 
   },
 
+  saveLocalNodeIP: function (nodeIP) {
+
+    return db.push("/config/node/address", nodeIP);
+
+  },
+
+  getRootNodes: function () {
+
+    return db.getData("/config/root_nodes");
+
+  },
+
   generateDefaultConfig: function (local_node) {
 
     var localNodeConfigStructure = {
@@ -117,7 +129,13 @@ module.exports = {
             }
         },
 
-        max_used_space: 0
+        max_used_space: 0,
+        root_nodes: {
+            "63h6c38ch63c983ch698w": {
+              "ip": "root.pl.cuddy.network",
+              "port": 6689
+            }
+        }
 
 
       }
