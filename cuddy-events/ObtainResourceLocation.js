@@ -42,7 +42,10 @@ module.exports = {
      /// exclude
      i = 0;
      for (var item in excludes) {
-        i++;
+       if (ContractsLedgerProcessor.isContractExistOnNode(contractID, excludes[item])) {
+            i++;
+        }
+        
         try {
           var index = node_Ids_array.indexOf(excludes[item]);
           if (index > -1) {
