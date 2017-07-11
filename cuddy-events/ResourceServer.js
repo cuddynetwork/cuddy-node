@@ -41,11 +41,7 @@ if (request.url.indexOf("/download") > -1) {
   requested_contract_id = url_splitted[1].replace("/", "");
 
   /// if content is not absent on your node, redirect to node, which have this resource
-  if (ContractsLedgerProcessor.isContractExistOnNode(requested_contract_id, "piesek")) {
-
-
-
-
+  if (ContractsLedgerProcessor.isContractExistOnNode(requested_contract_id, localNodeID)) {
 
   console.log(new Date(dt.now()) + " " + 'Received resource download request from remote client, contract ' + requested_contract_id);
 
@@ -74,13 +70,13 @@ if (request.url.indexOf("/download") > -1) {
 
   console.log(other_node_details);
 
-  other_node_details.address;
 
-  //  response.writeHead(302, {
-  //    'Location': 'http://onet.pl'
-      //add other headers here...
-    //});
-  //  response.end();
+    console.log('http://' + other_node_details.ip.toString() + ":" + other_node_details.port.toString() + "/download/" + requested_contract_id);
+
+    response.writeHead(302, {
+      'Location': 'http://' + other_node_details.ip.toString() + ":" + other_node_details.port.toString() + "/download/" + requested_contract_id
+    });
+    response.end();
 
 
 }
