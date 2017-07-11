@@ -5,16 +5,19 @@
 
 
 var Structures = require('../resources/Structures.js');
-
+var Constants = require('../resources/Constants.js');
 
 var Node = Structures.Node;
 var Contract = Structures.Contract;
+
+const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
+
 
 /// Init JSON database ////
 
 var JsonDB = require('node-json-db');
 
-var db = new JsonDB("/home/lakewik/.cuddy/ledgers/cuddy-nodes-ledger", true, true);
+var db = new JsonDB(LEDGERS_DEFAULT_SAVE_LOCATION + "/cuddy-nodes-ledger", true, true);
 
 ///////
 
@@ -25,9 +28,22 @@ module.exports = {
     return db.getData("/nodes/" + nodeID.toString());
 
   },
+
+  getNodes: function () {
+
+    return db.getData("/nodes");
+
+  },
+
   insertNode: function (nodeID, node_details) {
 
     return db.push("/nodes/" + nodeID.toString(), node_details);
+
+  },
+
+  insertNodes: function (nodes) {
+
+    return db.push("/nodes/", nodes);
 
   },
 
