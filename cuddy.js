@@ -19,7 +19,10 @@ var Structures = require('./resources/Structures.js');
 var Constants = require('./resources/Constants.js');
 var LocalNode = require('./cuddy-events/MyNode.js');
 var NodesLedgerProcessor = require('./cuddy-events/NodesLedgerProcessor.js');
+var CollectTokenManager = require('./cuddy-events/Collect.js');
 
+var UploadHandler = require('./cuddy-events/HandleUpload.js');
+var ResourceServer = require('./cuddy-events/ResourceServer.js');
 
 /* Constants */
 
@@ -87,6 +90,11 @@ if (firstrun) {
   var localNodePort = LocalNodeDetails.port;
 
 }
+
+/// Init handlers and servers //
+
+ResourceServer.init();
+UploadHandler.init();
 
 //var Node = Structures.Node;
 var Contract = Structures.Contract;
@@ -356,7 +364,7 @@ wsServer.on('request', function(request) {
                   console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT_NODE message from remote client, inserting node ' + JSON.stringify(json.node.id) + ' contract '+JSON.stringify(json.contract) + ' to ledger');
 
                   /// publish node that contains contract content
-                  ContractsLedgerProcessor.addNewNodeToContract(JSON.stringify(json.contract_id), JSON.stringify(json.node.id));
+                  ContractsLedgerProcessor.addNewNodeToContract(JSON.stringify(json.contract_id), JSON.stringify(json.node.id), JSON.stringify(json.store_begin));
 
                   connection.sendUTF('{"result":"SAVED"}');
 
