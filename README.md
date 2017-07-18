@@ -29,7 +29,7 @@ npm install osenv
 
 80/443 - standard port to resources
 
-6686 - RPC to Wallet 
+6686 - Cuddy node RPC
 
 6687 - HideCoin default communication
 
