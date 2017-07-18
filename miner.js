@@ -57,6 +57,19 @@ hours.sync((err, res) => {
       return
     }
     working = true
+    
+    //Adding genesis hash
+	const block = helper.baseToBuf("")
+	const result = res.result
+	Block.set(block, {
+          nonce: nonce
+        })
+	rpcClient.call('blockFound', {hash: helper.bufToBase("ca1c5612161b1f75fdb2b2be0043b5790e0e2f4fd9c919b9c419618ea4368558"), blockData: helper.bufToBase(block), txHashList: false}, (res) => {
+            res && res.status && log(res.status)
+          })
+	log('Add genesis')
+
+    
     log('Requesting fresh data')
     rpcClient.call('getMiningTask', {nonce: initNonce, hps: hps}, (res) => {
       if (!res || !res.result) {
