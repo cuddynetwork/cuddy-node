@@ -92,7 +92,25 @@ if (request.url.indexOf("/download") > -1) {
 
 
 });
-server.listen(DEFAULT_PORT_PUBLIC, function() { });
+
+module.exports = {
+
+  init: function (nodeID) {
+    console.log(new Date(dt.now()) + " " + colors.green('Starting resource server module!'));
+    try {
+      server.listen(DEFAULT_PORT_PUBLIC, function() { });
+      console.log(new Date(dt.now()) + " " + colors.green('Resource server module started!'));
+    } catch (err) {
+      console.log(new Date(dt.now()) + " " + colors.red('Error while initializing resource server module!'));
+    }
+
+    return true;
+
+  }
+
+};
+
+
 
 //excludes = [];
 //excludes.push("63h6c38ch63c983ch698w");
