@@ -5,6 +5,7 @@
 
 var Structures = require('../resources/Structures.js');
 var Constants = require('../resources/Constants.js');
+var LocalNode = require('./MyNode.js');
 
 
 var Node = Structures.Node;
@@ -16,8 +17,10 @@ const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
 /// Init JSON database ////
 
 var JsonDB = require('node-json-db');
+//LocalNode.getLedgersSaveLocation()
 
-var db = new JsonDB(LEDGERS_DEFAULT_SAVE_LOCATION + "/ledgers/cuddy-contracts-ledger", true, true);
+var db = new JsonDB(LEDGERS_DEFAULT_SAVE_LOCATION + "/cuddy-contracts-ledger", true, true);
+
 
 //db.save();
 
@@ -25,12 +28,12 @@ var db = new JsonDB(LEDGERS_DEFAULT_SAVE_LOCATION + "/ledgers/cuddy-contracts-le
 
 module.exports = {
 
-addNewNodeToContract: function (contract_id, nodeID) {
+addNewNodeToContract: function (contract_id, nodeID, storeBeginTimestamp) {
 
   /// firstly we must get the most actual contract nodes ledger from all nodes which storing this contract resources
 
   var ContractNodeDetails  = {
-      storeBeginTimestamp: 0
+      storeBeginTimestamp: storeBeginTimestamp
 
   }
 
@@ -143,6 +146,13 @@ getContractNodeByIndex: function (contract_id, node_index) {
 getContractNodeByID: function (contract_id, nodeID) {
 
   return db.getData("/contracts");
+
+},
+
+generateDefaultLedgerStructure: function () {
+
+  nodes = db.push("/contracts");
+  return true;
 
 }
 
