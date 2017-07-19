@@ -6,6 +6,7 @@
 
 var Structures = require('../resources/Structures.js');
 var Constants = require('../resources/Constants.js');
+var crypto = require('crypto');
 
 const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
 
@@ -14,7 +15,7 @@ const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
 
 var JsonDB = require('node-json-db');
 
-var db = new JsonDB(LEDGERS_DEFAULT_SAVE_LOCATION + "/.cuddy/ledgers/cuddy-local-collect-tokens-ledger", true, true);
+var db = new JsonDB(LEDGERS_DEFAULT_SAVE_LOCATION + "/cuddy-local-collect-tokens-ledger", true, true);
 
 
 
@@ -55,7 +56,21 @@ module.exports = {
   getCollectTokenContract: function(collect_token_id) {
 
     var collectTokenContract = db.getData("/collect_tokens/" + collect_token_id.toString() + "/for_contract").toString();
-    return collectTokencontract;
+    return collectTokenContract;
+
+  },
+
+  getCollectTokenFileName: function(collect_token_id) {
+
+    var collectTokenFileName = db.getData("/collect_tokens/" + collect_token_id.toString() + "/file_name").toString();
+    return collectTokenFileName;
+
+  },
+
+  generateDefaultLedgerStructure: function () {
+
+    nodes = db.push("/collect_tokens");
+    return true;
 
   }
 
