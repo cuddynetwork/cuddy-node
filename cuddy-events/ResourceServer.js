@@ -34,20 +34,24 @@ var server = http.createServer(function(request, response) {
 
 if (request.url.indexOf("/download") > -1) {
 
+ /// We need to parse URL ////
   var url_splitted = request.url.split("/download");
 
-  //console.log(url_splitted[1]);
+  tmp_parse = url_splitted[1].replace("/", "");
 
-  requested_contract_id = url_splitted[1].replace("/", "");
+  var url_splitted_2 = tmp_parse.split("/");
+  requested_contract_id = url_splitted_2[0].replace("/", "");
+  requested_file_name = url_splitted_2[1].replace("/", "");
 
+ /// URL parsing end
   /// if content is not absent on your node, redirect to node, which have this resource
   if (ContractsLedgerProcessor.isContractExistOnNode(requested_contract_id, localNodeID)) {
 
-  console.log(new Date(dt.now()) + " " + 'Received resource download request from remote client, contract ' + requested_contract_id);
+  console.log(new Date(dt.now()) + " " + 'Received resource download request from remote client, contract ' + requested_contract_id + ", file name: " + requested_file_name);
 
 
 
-  fs.readFile(CONTAINERS_DEFAULT_SAVE_LOCATION + "/" + requested_contract_id + "/" + requested_contract_id, "binary", function(err, file) {
+  fs.readFile(CONTAINERS_DEFAULT_SAVE_LOCATION + "/" + requested_contract_id + "/public/" + requested_file_name, "binary", function(err, file) {
     if(err) {
       response.writeHead(500, {"Content-Type": "text/html"});
       response.write("<h1>Internal Server Error</h1>" + "\n");
@@ -71,10 +75,10 @@ if (request.url.indexOf("/download") > -1) {
   console.log(other_node_details);
 
 
-    console.log('http://' + other_node_details.ip.toString() + ":" + other_node_details.port.toString() + "/download/" + requested_contract_id);
+    console.log('http://' + other_node_details.ip.toString() + ":80" + "/download/" + requested_contract_id);
 
     response.writeHead(302, {
-      'Location': 'http://' + other_node_details.ip.toString() + ":" + other_node_details.port.toString() + "/download/" + requested_contract_id
+      'Location': 'http://' + other_node_details.ip.toString() + ":80" + "/download/" + requested_contract_id
     });
     response.end();
 
