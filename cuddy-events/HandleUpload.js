@@ -8,13 +8,22 @@ var app = express();
 var path = require('path');
 var formidable = require('formidable');
 var fs = require('fs');
+var colors = require('colors/safe');
 
 var dateTime = require('node-datetime');
+var mkdirp = require('mkdirp');
+
 
 var http = require('http');
 
 var CollectTokenManager = require('./Collect.js');
 var Constants = require('../resources/Constants.js');
+var ContractsLedgerProcessor = require('./ContractsLedgerProcessor.js');
+var LocalNode = require('./MyNode.js');
+var Broadcaster = require('./Broadcaster.js');
+
+
+
 
 const DEFAULT_PORT_CONTENT_RECEIVING = Constants.DEFAULT_PORT_CONTENT_RECEIVING;
 const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
@@ -36,7 +45,7 @@ var server = http.createServer(function(req, res) {
 
             if (CollectTokenManager.isTokenExist(collect_token_id)) {
 
-                collect_token_contract = CollectTokenManager.getCollectTokenContract(collect_token_id);
+                collect_token_contract_id = CollectTokenManager.getCollectTokenContract(collect_token_id);
 
                 // create an incoming form object
                 var form = new formidable.IncomingForm();
@@ -44,12 +53,16 @@ var server = http.createServer(function(req, res) {
                 form.multiples = false;
 
                 // store all uploads in the /resources directory
-                form.uploadDir = CONTAINERS_DEFAULT_SAVE_LOCATION;
+                form.uploadDir = CONTAINERS_DEFAULT_SAVE_LOCATION + "/" + collect_token_contract_id.toString();
+
+                mkdirp(form.uploadDir, function(err) {
+                  // path exists unless there was an error
+                });
 
                 // every time a file has been uploaded successfully,
                 // rename it to it's orignal name
                 form.on('file', function(field, file) {
-                    fs.rename(file.path, path.join(form.uploadDir, file.name));
+                    fs.rename(file.path, path.join(form.uploadDir, collect_token_contract_id.toString()));
                 });
 
                 // log any errors that occur
@@ -59,6 +72,10 @@ var server = http.createServer(function(req, res) {
 
                 // once all the files have been uploaded, send a response to the client
                 form.on('end', function() {
+                    currentTimestamp = Math.round(new Date().getTime()/1000);
+                    console.log(currentTimestamp);
+                    ContractsLedgerProcessor.addNewNodeToContract(collect_token_contract_id, LocalNode.getLocalNodeID(), currentTimestamp)
+                    Broadcaster.broadcastContractNode(collect_token_contract_id, LocalNode.getLocalNodeID(), 20)
                     res.end('success');
                 });
 
@@ -82,4 +99,18 @@ var server = http.createServer(function(req, res) {
 
 });
 
-server.listen(DEFAULT_PORT_CONTENT_RECEIVING, function() {});
+module.exports = {
+
+  init: function (nodeID) {
+    console.log(new Date(dt.now()) + " " + colors.green('Starting resource upload handler!'));
+    try {
+      server.listen(DEFAULT_PORT_CONTENT_RECEIVING, function() {});
+      console.log(new Date(dt.now()) + " " + colors.green('Resource upload handler started!'));
+    } catch (err) {
+      console.log(new Date(dt.now()) + " " + colors.red('Error while initializing resource upload handler!'));
+    }
+    return true;
+
+  }
+
+};
