@@ -43,6 +43,11 @@ var Node = {
     checkNegative: 0, // With incorect checksum
     capacityAvaiable: 0, // In bytes
     capacityUsed: 0, // Used capacity, not know if needed, we can calculate it from ladgerOfContracts
+    competitive: {
+       storage: 0,
+       execution: 0,
+       transfer: 0
+   }
 
 };
 
