@@ -25,6 +25,7 @@ var WebSocketClientManager = require('./cuddy-events/WebSocketClientManager.js')
 var Structures = require('./resources/Structures.js');
 var Constants = require('./resources/Constants.js');
 var LocalNode = require('./cuddy-events/MyNode.js');
+//console.log(LocalNode.getLocalNodeID());
 var NodesLedgerProcessor = require('./cuddy-events/NodesLedgerProcessor.js');
 var CollectTokenManager = require('./cuddy-events/Collect.js');
 
@@ -37,6 +38,8 @@ const DEFAULT_PORT_PUBLIC = Constants.DEFAULT_PORT_PUBLIC;
 const DEFAULT_PORT_COMUNICATION = Constants.DEFAULT_PORT_COMUNICATION;
 const DEFAULT_TOKEN_EXPIRATION_PERIOD = Constants.DEFAULT_TOKEN_EXPIRATION_PERIOD;
 const INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT = Constants.INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
+
+
 
 
 
@@ -54,6 +57,8 @@ console.log(
     figlet.textSync('CUDDY', { horizontalLayout: 'full' })
   )
 );
+
+console.log(LocalNode.generateNodeID());
 
 
 var dt = dateTime.create();
@@ -135,25 +140,34 @@ console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 recipientNodesCount = INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
 nodes_in_ledger_count = NodesLedgerProcessor.countNodesInLedger();
+
+var local_node = {
+  nodeID: localNodeID,
+  port: localNodePort,
+  address: localNodeIP
+}
+
+var NodeAnnouceMessage = {
+  method: "NODE_ANNOUCE",
+  nodes: local_node
+}
+
 if (nodes_in_ledger_count < recipientNodesCount) {
   recipientNodesCount = nodes_in_ledger_count;
-}
-//else {
+  recipientNodes = NodesLedgerProcessor.getNodes();
+
+    i = 0;
+    for (var recipient_node in recipientNodes) {
+      console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' + (i+1).toString()));
+      result = WebSocketClientManager.sendMessage (recipientNodes[recipient_node].ip + ":" + recipientNodes[recipient_node].port, JSON.stringify(NodeAnnouceMessage));
+      i++;
+    }
+
+} else {
 
   i = 0;
   while (i < recipientNodesCount) {
     random_node_details = NodesLedgerProcessor.getRandomNodeDetails()
-
-    var local_node = {
-      nodeID: localNodeID,
-      port: localNodePort,
-      address: localNodeIP
-    }
-
-    var NodeAnnouceMessage = {
-      method: "NODE_ANNOUCE",
-      nodes: local_node
-    }
 
     console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' + (i+1).toString()));
 
@@ -161,7 +175,7 @@ if (nodes_in_ledger_count < recipientNodesCount) {
     i++;
   }
 
-//}
+}
 
 
 /* Create WebSocket Listening Server */
