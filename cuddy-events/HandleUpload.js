@@ -46,6 +46,7 @@ var server = http.createServer(function(req, res) {
             if (CollectTokenManager.isTokenExist(collect_token_id)) {
 
                 collect_token_contract_id = CollectTokenManager.getCollectTokenContract(collect_token_id);
+                collect_token_file_name = CollectTokenManager.getCollectTokenFileName(collect_token_id);
 
                 // create an incoming form object
                 var form = new formidable.IncomingForm();
@@ -53,7 +54,7 @@ var server = http.createServer(function(req, res) {
                 form.multiples = false;
 
                 // store all uploads in the /resources directory
-                form.uploadDir = CONTAINERS_DEFAULT_SAVE_LOCATION + "/" + collect_token_contract_id.toString();
+                form.uploadDir = CONTAINERS_DEFAULT_SAVE_LOCATION + "/" + collect_token_contract_id.toString() + "/public";
 
                 mkdirp(form.uploadDir, function(err) {
                   // path exists unless there was an error
@@ -62,7 +63,7 @@ var server = http.createServer(function(req, res) {
                 // every time a file has been uploaded successfully,
                 // rename it to it's orignal name
                 form.on('file', function(field, file) {
-                    fs.rename(file.path, path.join(form.uploadDir, collect_token_contract_id.toString()));
+                    fs.rename(file.path, path.join(form.uploadDir, collect_token_file_name.toString()));
                 });
 
                 // log any errors that occur
