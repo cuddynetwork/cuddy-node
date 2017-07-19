@@ -149,7 +149,7 @@ module.exports = {
 
   },
 
-  generateDefaultConfig: function (local_node) {
+  generateDefaultConfig: function () {
 
     var localNodeConfigStructure = {
       config: {
@@ -205,6 +205,7 @@ module.exports = {
     }
 
     is_initialized = db.getData("/config/initialized").toString();
+
 
     if (is_initialized == "1") {
       return false;
