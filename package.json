@@ -13,6 +13,12 @@
     "node-json-rpc": "0.0.1",
     "ntp-client": "^0.5.3",
     "ramda": "^0.22.1",
-    "socket.io": "^1.5.0"
+    "socket.io": "^1.5.0",
+    "websocket": "^1.0.24",
+    "jshashes": "^1.0.7",
+    "k-bucket": "^3.2.1",
+    "jshashes": "^1.0.7",
+    "colors": "^1.1.2",
+    "node-datetime": "^1.0.1",
   }
 }
