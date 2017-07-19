@@ -11,6 +11,13 @@ var KBucket = require('k-bucket');
 var colors = require('colors/safe');
 var dateTime = require('node-datetime');
 var WebSocketClient = require('websocket').client;
+
+var chalk       = require('chalk');
+var clear       = require('clear');
+var CLI         = require('clui');
+var figlet      = require('figlet');
+
+
 const getIP = require('external-ip')();
 
 var ContractsLedgerProcessor = require('./cuddy-events/ContractsLedgerProcessor.js');
@@ -32,6 +39,7 @@ const DEFAULT_TOKEN_EXPIRATION_PERIOD = Constants.DEFAULT_TOKEN_EXPIRATION_PERIO
 const INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT = Constants.INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
 
 
+
 function searchMoreNodes(nodes_count) {
     // Search and return Cuddy nodes
 }
@@ -40,8 +48,19 @@ function searchMoreNodes(nodes_count) {
 
 /* Initialization */
 
+clear();
+console.log(
+  chalk.yellow(
+    figlet.textSync('CUDDY', { horizontalLayout: 'full' })
+  )
+);
+
+
 var dt = dateTime.create();
 dt.format('m/d/Y H:M:S');
+
+console.log(new Date(dt.now()) + " " + colors.green('Initializing Cuddy node !'));
+
 
 var CollectTokensBucket = [];
 
@@ -99,7 +118,6 @@ UploadHandler.init();
 //var Node = Structures.Node;
 var Contract = Structures.Contract;
 
-console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 /* Load ROOT-NODES */
 root_nodes = LocalNode.getRootNodes();
@@ -109,6 +127,7 @@ for (var attr in root_nodes) {
     NodesLedgerProcessor.insertNode(attr, root_nodes[attr]);
 }
 
+console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 
 /* Synchronize your global ledgers with root nodes */
 
@@ -119,27 +138,30 @@ nodes_in_ledger_count = NodesLedgerProcessor.countNodesInLedger();
 if (nodes_in_ledger_count < recipientNodesCount) {
   recipientNodesCount = nodes_in_ledger_count;
 }
+//else {
 
-i = 0;
-while (i < recipientNodesCount) {
-  random_node_details = NodesLedgerProcessor.getRandomNodeDetails()
+  i = 0;
+  while (i < recipientNodesCount) {
+    random_node_details = NodesLedgerProcessor.getRandomNodeDetails()
 
-  var local_node = {
-    nodeID: localNodeID,
-    port: localNodePort,
-    address: localNodeIP
+    var local_node = {
+      nodeID: localNodeID,
+      port: localNodePort,
+      address: localNodeIP
+    }
+
+    var NodeAnnouceMessage = {
+      method: "NODE_ANNOUCE",
+      nodes: local_node
+    }
+
+    console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' + (i+1).toString()));
+
+    WebSocketClientManager.sendMessage (random_node_details.ip + ":" + random_node_details.port, JSON.stringify(NodeAnnouceMessage));
+    i++;
   }
 
-  var NodeAnnouceMessage = {
-    method: "NODE_ANNOUCE",
-    nodes: local_node
-  }
-
-  console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' + (i+1).toString()));
-
-  WebSocketClientManager.sendMessage (random_node_details.ip + ":" + random_node_details.port, JSON.stringify(NodeAnnouceMessage));
-  i++;
-}
+//}
 
 
 /* Create WebSocket Listening Server */
@@ -157,6 +179,16 @@ var server = http.createServer(function(request, response) {
       response.writeHead(200, {"Content-Type": "text/json"});
 
       current_contract_ledger_content = ContractsLedgerProcessor.getContractsLedgerContent();
+
+      response.write( JSON.stringify(current_contract_ledger_content));
+      response.end();
+  } else if (request.url == "/cuddy_nodes_ledger") {
+
+      console.log(new Date(dt.now()) + " " + 'Received nodes ledger upload HTTP request from remote client');
+
+      response.writeHead(200, {"Content-Type": "text/json"});
+
+      current_contract_ledger_content = NodesLedgerProcessor.getNodes();
 
       response.write( JSON.stringify(current_contract_ledger_content));
       response.end();
