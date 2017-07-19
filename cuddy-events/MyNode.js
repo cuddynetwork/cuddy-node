@@ -10,6 +10,10 @@ var Structures = require('../resources/Structures.js');
 var Constants = require('../resources/Constants.js');
 var Hashes = require('jshashes');
 var crypto = require('crypto');
+var NodesLedgerProcessor = require('./NodesLedgerProcessor.js');
+var CollectTokenManager = require('./Collect.js');
+var ContractsLedgerProcessor = require('./ContractsLedgerProcessor.js');
+
 
 const CONFIG_SAVE_LOCATION = Constants.CONFIG_SAVE_LOCATION;
 const LEDGERS_DEFAULT_SAVE_LOCATION = Constants.LEDGERS_DEFAULT_SAVE_LOCATION;
@@ -43,9 +47,58 @@ var db = new JsonDB(CONFIG_SAVE_LOCATION + "/local-node-config", true, true);
 
 module.exports = {
 
+
+  init: function () {
+
+
+
+    if (filePathExists(module.exports.getLedgersSaveLocation() + "/cuddy-nodes-ledger.json") != true) {
+        NodesLedgerProcessor.generateDefaultLedgerStructure();
+    }
+
+    if (filePathExists(module.exports.getLedgersSaveLocation() + "/cuddy-contracts-ledger.json") != true) {
+        ContractsLedgerProcessor.generateDefaultLedgerStructure();
+    }
+
+    if (filePathExists(module.exports.getLedgersSaveLocation() + "/cuddy-local-collect-tokens-ledger.json") != true) {
+        CollectTokenManager.generateDefaultLedgerStructure();
+    }
+
+
+
+    return true;
+
+  },
+
+  getContainersSaveLocation: function () {
+
+    if (module.exports.ifConfigFileExist()) {
+      return db.getData("/config/containers_path");
+    } else {
+      return CONTAINERS_DEFAULT_SAVE_LOCATION;
+    }
+
+  },
+
+  getLedgersSaveLocation: function () {
+
+    if (module.exports.ifConfigFileExist()) {
+      return db.getData("/config/ledgers_path");
+    } else {
+      return LEDGERS_DEFAULT_SAVE_LOCATION;
+    }
+
+  },
+
   getLocalNodeDetails: function () {
 
     return db.getData("/config/node");
+
+  },
+
+  getLocalNodeID: function () {
+
+    return db.getData("/config/node/id");
 
   },
 
