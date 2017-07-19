@@ -4,31 +4,53 @@
 */
 
 var NodesLedgerProcessor = require('./NodesLedgerProcessor.js');
+var WebSocketClientManager = require('./WebSocketClientManager.js');
+
 
 module.exports = {
 
   broadcastContractNode: function (contractID, nodeID, recipientNodesCount) {
 
-    var ContractNode = {
-      method: "PUBLISH_CONTRACT_NODE",
-      node: {
-        id: nodeID
-      },
-      store_begin: 0,
-      contract: contractID
+      var ContractNode = {
+        method: "PUBLISH_CONTRACT_NODE",
+        node: {
+          id: nodeID
+        },
+        store_begin: 0,
+        contract: contractID
+
+      }
+
+      total_nodes_in_ledger = NodesLedgerProcessor.countNodesInLedger();
+
+      /*
+      * It will broadcast to all nodes if not enough nodes in your ledger
+      */
+
+      if (recipientNodesCount > total_nodes_in_ledger) {
+        recipientNodesCount = total_nodes_in_ledger;
+
+        recipientNodes = NodesLedgerProcessor.getNodes();
+
+          for (var recipient_node in recipientNodes) {
+            console.log("Broadcasting PUBLISH_CONTRACT_NODE to remote node " + recipientNodes[recipient_node].ip + ":" + recipientNodes[recipient_node].port + "...");
+            result = WebSocketClientManager.sendMessage (recipientNodes[recipient_node].ip + ":" + recipientNodes[recipient_node].port, JSON.stringify(ContractNode));
+          }
+
+      } else {
+
+      i = 0;
+      while (i < recipientNodesCount) {
+        recipient_node = NodesLedgerProcessor.getRandomNodeDetails();
+        console.log("Broadcasting PUBLISH_CONTRACT_NODE to remote node " + recipient_node.ip + ":" + recipient_node.port + "...");
+        result = WebSocketClientManager.sendMessage (recipient_node.ip + ":" + recipient_node.port, JSON.stringify(ContractNode));
+
+        i++;
+      }
 
     }
 
-    i = 0;
-    while (i < recipientNodesCount) {
-
-      recipient_node = NodesLedgerProcessor.getRandomNodeDetails();
-      result = WebSocketClientManager.sendMessage (recipient_node.ip + ":" + recipient_node.port, JSON.stringify(ContractNode));
-
-      i++;
-    }
-
-    return db.getData("/nodes/" + nodeID.toString());
+      return true
 
   },
 
@@ -39,8 +61,42 @@ module.exports = {
           contract: contract
         }
 
-    return db.getData("/nodes/" + nodeID.toString());
+        i = 0;
+
+        total_nodes_in_ledger = NodesLedgerProcessor.countNodesInLedger();
+
+        /*
+        * It will broadcast to all nodes if not enough nodes in your ledger
+        */
+
+        if (recipientNodesCount > total_nodes_in_ledger) {
+          recipientNodesCount = total_nodes_in_ledger;
+
+          recipientNodes = NodesLedgerProcessor.getNodes();
+
+            for (var recipient_node in recipientNodes) {
+              console.log("Broadcasting PUBLISH_CONTRACT to remote node " + recipientNodes[recipient_node].ip + ":" + recipientNodes[recipient_node].port + "...");
+              result = WebSocketClientManager.sendMessage (recipientNodes[recipient_node].ip + ":" + recipientNodes[recipient_node].port, JSON.stringify(Contract));
+            }
+
+
+        } else {
+
+        while (i < recipientNodesCount) {
+
+          recipient_node = NodesLedgerProcessor.getRandomNodeDetails();
+          console.log("Broadcasting PUBLISH_CONTRACT to remote node " + recipient_node.ip + ":" + recipient_node.port + "...");
+          result = WebSocketClientManager.sendMessage (recipient_node.ip + ":" + recipient_node.port, JSON.stringify(Contract));
+
+          i++;
+        }
+
+      }
+
+    return true
 
   },
 
 };
+
+module.exports.broadcastContractNode("dsadattas5d76anda78nydasayugdsad877878d709jsa8d097a", "dssfddgdfgdgg");
