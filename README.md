@@ -2,6 +2,13 @@
 
 Cuddy is a webcontainer for your website in distributed peer to peer network.
 
+
+[![Build Status](https://travis-ci.org/cuddynetwork/cuddy-node.svg?branch=master)](https://travis-ci.org/cuddynetwork/cuddy-node)
+[![devDependency Status](https://david-dm.org/cuddynetwork/cuddy-node/dev-status.svg)](https://david-dm.org/cuddynetwork/cuddy-node#info=devDependencies)
+[![dependencies Status](https://david-dm.org/cuddynetwork/cuddy-node.svg)](https://david-dm.org/cuddynetwork/cuddy-node.svg#info=dependencies)
+[![license:mit](https://img.shields.io/badge/license-mit-blue.svg)](https://opensource.org/licenses/MIT)
+
+
 ### Website of project
 https://cuddy.network
 
