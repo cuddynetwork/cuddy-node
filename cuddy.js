@@ -159,6 +159,9 @@ if (nodes_in_ledger_count < recipientNodesCount) {
     i = 0;
     for (var recipient_node in recipientNodes) {
       console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' + (i+1).toString()));
+    //  if (recipientNodes[recipient_node].ip != local_node.address) {
+
+    //  }
       result = WebSocketClientManager.sendMessage (recipientNodes[recipient_node].ip + ":" + recipientNodes[recipient_node].port, JSON.stringify(NodeAnnouceMessage));
       i++;
     }
@@ -292,7 +295,7 @@ wsServer.on('request', function(request) {
             for(var attribute in json.nodes){
 
               //console.log(JSON.stringify(json.nodes[0]));
-
+              console.log(json);
               nodeid = json.nodes[i].nodeID;
               var node_details = {
                   ip: json.nodes[i].address,
