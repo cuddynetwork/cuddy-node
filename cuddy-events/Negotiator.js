@@ -43,9 +43,10 @@ function processContractNegotiation() {
                     //CHECK IF competitive 
                     //Find smallest RateCompetitive for this node
                     
-                    var RateCompetitive = competitive.storage * fee.storage + 
-                        competitive.execution * fee.execution + 
-                        competitive.transfer * fee.transfer;
+                    var RateCompetitive = 
+                        Math.min(competitive.storage * fee.storage,
+                        competitive.execution * fee.execution,
+                        competitive.transfer * fee.transfer);
                     //contract.fee.storage
                 }    
             }
