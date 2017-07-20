@@ -141,15 +141,19 @@ console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
 recipientNodesCount = INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
 nodes_in_ledger_count = NodesLedgerProcessor.countNodesInLedger();
 
+var local_node_array = []
+
 var local_node = {
   nodeID: localNodeID,
   port: localNodePort,
   address: localNodeIP
 }
 
+local_node_array.push(local_node)
+
 var NodeAnnouceMessage = {
   method: "NODE_ANNOUCE",
-  nodes: local_node
+  nodes: local_node_array
 }
 
 if (nodes_in_ledger_count < recipientNodesCount) {
