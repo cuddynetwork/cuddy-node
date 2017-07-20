@@ -56,9 +56,17 @@ var server = http.createServer(function(req, res) {
                 // store all uploads in the /resources directory
                 form.uploadDir = CONTAINERS_DEFAULT_SAVE_LOCATION + "/" + collect_token_contract_id.toString() + "/public";
 
-                mkdirp(form.uploadDir, function(err) {
-                  // path exists unless there was an error
-                });
+                /// create FULL path
+                const targetDir = form.uploadDir;
+                const sep = path.sep;
+                const initDir = path.isAbsolute(targetDir) ? sep : '';
+                targetDir.split(sep).reduce((parentDir, childDir) => {
+                  const curDir = path.resolve(parentDir, childDir);
+                    if (!fs.existsSync(curDir)) {
+                      fs.mkdirSync(curDir);
+                    }
+                    return curDir;
+                  }, initDir);
 
                 // every time a file has been uploaded successfully,
                 // rename it to it's orignal name
