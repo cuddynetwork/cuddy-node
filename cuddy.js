@@ -276,6 +276,7 @@ wsServer.on('request', function(request) {
                 totalIncomingDataSize: json.parametrs.data_size,
                 expiration_time: DEFAULT_TOKEN_EXPIRATION_PERIOD + new Date(),
                 applicant_hash: json.parametrs.applicant_hash,
+                file_name: json.parametrs.file_name,
                 for_contract: json.parametrs.contract_id
             }
 
