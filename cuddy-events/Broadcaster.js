@@ -21,7 +21,7 @@ module.exports = {
 
       }
 
-      total_nodes_in_ledger = NodesLedgerProcessor.countNodesInLedger();
+        total_nodes_in_ledger = NodesLedgerProcessor.countNodesInLedger();
 
       /*
       * It will broadcast to all nodes if not enough nodes in your ledger
@@ -97,6 +97,25 @@ module.exports = {
 
   },
 
+  broadcastContractToNode: function (contract, nodeDetails) {
+
+          var Contract = {
+            method: "PUBLISH_CONTRACT",
+            contract: contract
+          }
+
+          /*
+          * It will broadcast contract to specified node
+          */
+
+            recipient_node = nodeDetails;
+            console.log("Broadcasting PUBLISH_CONTRACT to remote node " + recipient_node.ip + ":" + recipient_node.port + "...");
+            result = WebSocketClientManager.sendMessage (recipient_node.ip + ":" + recipient_node.port, JSON.stringify(Contract));
+
+      return true
+
+    },
+
 };
 
-module.exports.broadcastContractNode("dsadattas5d76anda78nydasayugdsad877878d709jsa8d097a", "dssfddgdfgdgg");
+//module.exports.broadcastContractNode("dsadattas5d76anda78nydasayugdsad877878d709jsa8d097a", "dssfddgdfgdgg", 20);
