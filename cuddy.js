@@ -32,6 +32,11 @@ var CollectTokenManager = require('./cuddy-events/Collect.js');
 var UploadHandler = require('./cuddy-events/HandleUpload.js');
 var ResourceServer = require('./cuddy-events/ResourceServer.js');
 
+var LocalNodeDetails;
+var localNodeID;
+var localNodeIP;
+var localNodePort;
+
 /* Constants */
 
 const DEFAULT_PORT_PUBLIC = Constants.DEFAULT_PORT_PUBLIC;
@@ -69,30 +74,37 @@ console.log(new Date(dt.now()) + " " + colors.green('Initializing Cuddy node !')
 
 var CollectTokensBucket = [];
 
-firstrun = LocalNode.isFirstRun();
 
 console.log(colors.green(new Date(dt.now()) + " NETWORK :: Trying to obtain your external IP address...."));
 
 
-getIP((err, ip) => {
+getIP((err, myip) => {
    if (err) {
        throw err;
    }
-   console.log(ip);
-   var localNodeIP = ip;
+   console.log(colors.green(new Date(dt.now()) + " NETWORK :: Your external IP address is " + myip));
+   localNodeIP = myip;
+   init_node(myip);
 });
+
+
+function init_node(localNodeIP) {
+
+  firstrun = LocalNode.isFirstRun();
 
 if (firstrun) {
 
+  /// PERFORM CONFIGURATION /////
+
   console.log(new Date(dt.now()) + colors.green(" NODE :: Performing initial node initialization...."));
 
-  var localNodeID = LocalNode.generateNodeID();
+  localNodeID = LocalNode.generateNodeID();
 
-  var localNodePort = DEFAULT_PORT_COMUNICATION;
+  localNodePort = DEFAULT_PORT_COMUNICATION;
 
   console.log(new Date(dt.now()) + colors.green(" Your Node ID is: " + localNodeID.toString()));
 
-  var LocalNodeDetails = {
+  LocalNodeDetails = {
     id: localNodeID,
     address:  localNodeIP,
     port: localNodePort
@@ -104,14 +116,15 @@ if (firstrun) {
 
 } else {
 
-  var LocalNodeDetails = LocalNode.getLocalNodeDetails();
-  var localNodeID = LocalNodeDetails.id;
+  LocalNodeDetails = LocalNode.getLocalNodeDetails();
+  //console.log(localNodeIP);
+  localNodeID = LocalNodeDetails.id;
   if (localNodeIP !=  LocalNodeDetails.address) {
     LocalNode.saveLocalNodeIP(localNodeIP);
   } else {
-    var localNodeIP = LocalNodeDetails.address;
+    localNodeIP = LocalNodeDetails.address;
   }
-  var localNodePort = LocalNodeDetails.port;
+  localNodePort = LocalNodeDetails.port;
 
 }
 
@@ -128,26 +141,47 @@ var Contract = Structures.Contract;
 root_nodes = LocalNode.getRootNodes();
 
 /* Insert ROOT-NODES to nodes ledger */
+
 for (var attr in root_nodes) {
     NodesLedgerProcessor.insertNode(attr, root_nodes[attr]);
+    /* Synchronize your global ledgers with root nodes */
+    //// SYNC NODES LEDGERS ////
+
+    my_nodes_ledger_array = []
+    local_nods_ledger = NodesLedgerProcessor.getNodes();
+    for (var nodeID in local_nods_ledger) {
+      my_nodes_ledger_array.push(nodeID);
+    }
+
+    var Sync = {
+      method: "SYNC_NODES_LEDGER",
+      nodes_ledger: my_nodes_ledger_array
+    }
+
+    console.log(new Date(dt.now()) + colors.green(" NODE :: Synchronizing nodes ledger with root node " + JSON.stringify(root_nodes[attr])));
+
+    WebSocketClientManager.sendMessage (root_nodes[attr].ip + ":" + root_nodes[attr].port, JSON.stringify(Sync));
+
 }
 
 console.log(new Date(dt.now()) + " " + colors.green('Cuddy node started!'));
-
-/* Synchronize your global ledgers with root nodes */
 
 /* Broadcast this node to the Cuddy network */
 
 recipientNodesCount = INITIAL_NODE_ANNOUNCEMENT_MESSAGE_RECIPIENTS_COUNT;
 nodes_in_ledger_count = NodesLedgerProcessor.countNodesInLedger();
 
+
+
 var local_node_array = []
 
 var local_node = {
   nodeID: localNodeID,
   port: localNodePort,
-  address: localNodeIP
+  ip: localNodeIP
 }
+
+console.log(localNodeIP);
 
 local_node_array.push(local_node)
 
@@ -162,7 +196,7 @@ if (nodes_in_ledger_count < recipientNodesCount) {
 
     i = 0;
     for (var recipient_node in recipientNodes) {
-      console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' + (i+1).toString()));
+      console.log(new Date(dt.now()) + " " + colors.green('Broadcasting your node to network... Iteration ' +  JSON.stringify(NodeAnnouceMessage) + (i+1).toString()));
     //  if (recipientNodes[recipient_node].ip != local_node.address) {
 
     //  }
@@ -184,6 +218,10 @@ if (nodes_in_ledger_count < recipientNodesCount) {
 
 }
 
+}
+
+//// END INIT /////
+
 
 /* Create WebSocket Listening Server */
 
@@ -198,6 +236,8 @@ var server = http.createServer(function(request, response) {
       console.log(new Date(dt.now()) + " " + 'Received contracts ledger upload HTTP request from remote client');
 
       response.writeHead(200, {"Content-Type": "text/json"});
+
+      console.log(localNodeID);
 
       current_contract_ledger_content = ContractsLedgerProcessor.getContractsLedgerContent();
 
@@ -277,6 +317,7 @@ wsServer.on('request', function(request) {
                 expiration_time: DEFAULT_TOKEN_EXPIRATION_PERIOD + new Date(),
                 applicant_hash: json.parametrs.applicant_hash,
                 file_name: json.parametrs.file_name,
+                directory: json.parametrs.directory,
                 for_contract: json.parametrs.contract_id
             }
 
@@ -300,14 +341,14 @@ wsServer.on('request', function(request) {
             for(var attribute in json.nodes){
 
               //console.log(JSON.stringify(json.nodes[0]));
-              console.log(json);
+              //console.log(json);
               nodeid = json.nodes[i].nodeID;
               var node_details = {
                   ip: json.nodes[i].address,
                   port: json.nodes[i].port
               };
 
-              if (NodesLedgerProcessor.isNodeInLedger(nodeid)) {
+              if (NodesLedgerProcessor.isNodeInLedger(nodeid) != true) {
                   NodesLedgerProcessor.insertNode(nodeid, node_details);
                   console.log(new Date(dt.now()) + " " + 'Adding node ' + JSON.stringify(json.nodes[i]) + ' to ledger');
               }  else {
@@ -325,6 +366,8 @@ wsServer.on('request', function(request) {
             asked_nodeID = json.parametrs.nodeID.toString();
             asked_node_details = NodesLedgerProcessor.getNodeDetailsByID(asked_nodeID);
 
+            if (asked_node_details != false) {
+
             var node = {
               nodeID: asked_nodeID,
               port: asked_node_details.port,
@@ -338,6 +381,7 @@ wsServer.on('request', function(request) {
 
             console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node' + connection.remoteAddress);
             WebSocketClientManager.sendMessage (connection.remoteAddress.replace("::ffff:", "") + ":6689", JSON.stringify(NodeAnnouceResponse));
+          }
             //connection.sendUTF();
 
         }  else if (json.method == "PING") {
@@ -369,8 +413,8 @@ wsServer.on('request', function(request) {
                 my_nodes_ledger_array.push(nodeID);
               }
 
-              console.log(my_nodes_ledger_array);
-              console.log(remote_nodes_ledger);
+              //console.log(my_nodes_ledger_array);
+              //console.log(remote_nodes_ledger);
 
               nodes_ids_to_annouce = my_nodes_ledger_array.filter(function(x) { return remote_nodes_ledger.indexOf(x) < 0 })
 
@@ -404,7 +448,50 @@ wsServer.on('request', function(request) {
               /// handle Pong with to que get (PongQueue)
               connection.sendUTF('{  }');
 
-            } else if (json.method == "PUBLISH_CONTRACT") {
+            } else if (json.method == "SYNC_FULL_CONTRACTS_LEDGER") {
+                my_nodes_ledger_array = []
+                remote_nodes_ledger = json.nodes_ledger;
+                local_nods_ledger = NodesLedgerProcessor.getNodes();
+                for (var nodeID in local_nods_ledger) {
+                  my_nodes_ledger_array.push(nodeID);
+                }
+
+                console.log(my_nodes_ledger_array);
+                console.log(remote_nodes_ledger);
+
+                nodes_ids_to_annouce = my_nodes_ledger_array.filter(function(x) { return remote_nodes_ledger.indexOf(x) < 0 })
+
+                nodes_to_annouce_array = [];
+
+                for (var index in nodes_ids_to_annouce) {
+
+                  node_details = NodesLedgerProcessor.getNodeDetailsByID(nodes_ids_to_annouce[index]);
+
+                  var node = {
+                    nodeID: nodes_ids_to_annouce[index],
+                    port: node_details.port,
+                    address: node_details.address
+                  }
+
+                nodes_to_annouce_array.push(node);
+              }
+
+                console.log(nodes_ids_to_annouce);
+
+
+                var NodeAnnouceResponse = {
+                  method: "NODE_ANNOUCE",
+                  nodes: nodes_to_annouce_array
+                }
+
+                console.log(new Date(dt.now()) + " " + 'Sending NODE_ANNOUCE to remote node' + connection.remoteAddress);
+                WebSocketClientManager.sendMessage (connection.remoteAddress.replace("::ffff:", "") + ":6689", JSON.stringify(NodeAnnouceResponse));
+
+
+                /// handle Pong with to que get (PongQueue)
+                connection.sendUTF('{  }');
+
+              } else if (json.method == "PUBLISH_CONTRACT") {
 
                   console.log(new Date(dt.now()) + " " + 'Received PUBLISH_CONTRACT message from remote client, inserting contract '+JSON.stringify(json.contract) + ' to ledger');
 
