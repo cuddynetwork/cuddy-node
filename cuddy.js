@@ -10,6 +10,7 @@ var crypto = require('crypto');
 var KBucket = require('k-bucket');
 var colors = require('colors/safe');
 var dateTime = require('node-datetime');
+var prompt = require('prompt');
 var WebSocketClient = require('websocket').client;
 
 var chalk       = require('chalk');
@@ -24,6 +25,7 @@ var ContractsLedgerProcessor = require('./cuddy-events/ContractsLedgerProcessor.
 var WebSocketClientManager = require('./cuddy-events/WebSocketClientManager.js');
 var Structures = require('./resources/Structures.js');
 var Constants = require('./resources/Constants.js');
+var WizardSchema = require('./resources/ConfigWizard.js');
 var LocalNode = require('./cuddy-events/MyNode.js');
 //console.log(LocalNode.getLocalNodeID());
 var NodesLedgerProcessor = require('./cuddy-events/NodesLedgerProcessor.js');
@@ -94,8 +96,6 @@ function init_node(localNodeIP) {
 
 if (firstrun) {
 
-  /// PERFORM CONFIGURATION /////
-
   console.log(new Date(dt.now()) + colors.green(" NODE :: Performing initial node initialization...."));
 
   localNodeID = LocalNode.generateNodeID();
@@ -111,8 +111,48 @@ if (firstrun) {
   }
 
   LocalNode.saveLocalNodeDetails(LocalNodeDetails);
-  LocalNode.setInitialized();
 
+  //// PERFORM CONFIGURATION /////
+
+  //// DISPLAY CONFIG WIZARD PROMPT ////
+    var env = {
+        ip_address: localNodeIP
+    }
+      prompt.start();
+      prompt.get(WizardSchema(env), function(err, result) {
+        if (err) {
+          return console.log(err.message);
+        }
+
+        var size = parseFloat(result.space);
+        var unit = result.space.split(size.toString())[1];
+
+        var config = {
+          keypath: result.keypath,
+          address: result.payto,
+          storage: {
+            path: result.datadir,
+            size: size,
+            unit: unit
+          },
+          network: {
+            address: result.address,
+            port: result.port,
+            seeds: result.seed ? [result.seed] : []
+
+          },
+          loglevel: result.loglevel
+        };
+
+        console.log(
+
+          'Setup complete!' + [result.datadir]
+        );
+
+        LocalNode.setInitialized();
+});
+
+  //// END CONFIG WIZARD ////
 
 } else {
 
@@ -126,7 +166,7 @@ if (firstrun) {
   }
   localNodePort = LocalNodeDetails.port;
 
-}
+
 
 /// Init handlers and servers //
 
@@ -215,6 +255,8 @@ if (nodes_in_ledger_count < recipientNodesCount) {
     WebSocketClientManager.sendMessage (random_node_details.ip + ":" + random_node_details.port, JSON.stringify(NodeAnnouceMessage));
     i++;
   }
+
+}
 
 }
 
