@@ -18,6 +18,8 @@ var clear       = require('clear');
 var CLI         = require('clui');
 var figlet      = require('figlet');
 
+var natUpnp = require('nat-upnp');
+
 
 const getIP = require('external-ip')();
 
@@ -65,7 +67,7 @@ console.log(
   )
 );
 
-console.log(LocalNode.generateNodeID());
+//console.log(LocalNode.generateNodeID());
 
 
 var dt = dateTime.create();
@@ -76,6 +78,29 @@ console.log(new Date(dt.now()) + " " + colors.green('Initializing Cuddy node !')
 
 var CollectTokensBucket = [];
 
+console.log(colors.green(new Date(dt.now()) + " NETWORK :: Trying to map port over NAT UPnP to become available on the Cuddy network...."));
+
+
+var client = natUpnp.createClient();
+
+client.portMapping({
+  public: 6689,
+  private: 6689,
+  ttl: 0
+}, function(err) {
+  // Will be called once finished
+  obtainIP();
+  if (err) {
+
+    console.log(err);
+
+
+  } else {
+    console.log(colors.green(new Date(dt.now()) + " NETWORK :: Successfully mapped Cuddy communicatio port via UPnP...."));
+  }
+});
+
+function obtainIP () {
 
 console.log(colors.green(new Date(dt.now()) + " NETWORK :: Trying to obtain your external IP address...."));
 
@@ -88,6 +113,8 @@ getIP((err, myip) => {
    localNodeIP = myip;
    init_node(myip);
 });
+
+}
 
 
 function init_node(localNodeIP) {
@@ -118,6 +145,13 @@ if (firstrun) {
     var env = {
         ip_address: localNodeIP
     }
+
+    console.log(
+      chalk.yellow(
+        "Now we need to setup node. Let's go! Please set your preferences:"
+      )
+    );
+
       prompt.start();
       prompt.get(WizardSchema(env), function(err, result) {
         if (err) {
@@ -146,7 +180,7 @@ if (firstrun) {
 
         console.log(
 
-          'Setup complete!' + [result.datadir]
+          'Setup complete!'
         );
 
         LocalNode.setInitialized();
@@ -221,7 +255,7 @@ var local_node = {
   ip: localNodeIP
 }
 
-console.log(localNodeIP);
+//console.log(localNodeIP);
 
 local_node_array.push(local_node)
 
